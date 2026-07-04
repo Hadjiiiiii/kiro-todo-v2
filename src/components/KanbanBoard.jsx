@@ -10,6 +10,10 @@ import {
   Tooltip,
   Button,
   Fab,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  useMediaQuery,
 } from '@mui/material';
 import {
   DndContext,
@@ -24,6 +28,7 @@ import { useDroppable } from '@dnd-kit/core';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
 import EditIcon from '@mui/icons-material/Edit';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import { THEME, getCategoryColor } from '../constants';
 import { useTaskContext } from '../context/TaskContext';
 import SortableTaskCard, { TaskCard } from './TaskCard';
@@ -253,6 +258,8 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
   const [activeId, setActiveId] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [zoomedCategory, setZoomedCategory] = useState(null);
+  const [expandedPanels, setExpandedPanels] = useState(() => categories.length > 0 ? [categories[0]] : []);
+  const isMobile = useMediaQuery('(max-width:767px)');
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -335,12 +342,10 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
   };
 
   const handleDeleteColumn = (category) => {
-    // Only allow deleting if there are no tasks in the column (or move them)
     const columnTasks = tasks.filter((t) => t.category === category);
     if (columnTasks.length > 0) {
-      // Move tasks to the first remaining category
       const remaining = categories.filter((c) => c !== category);
-      if (remaining.length === 0) return; // Can't delete the last column
+      if (remaining.length === 0) return;
       const target = remaining[0];
       const updatedTasks = tasks.map((t) =>
         t.category === category ? { ...t, category: target } : t
@@ -350,9 +355,195 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
     deleteCategory(category);
   };
 
+  const handleAccordionToggle = (category) => {
+    setExpandedPanels((prev) =>
+      prev.includes(category)
+        ? prev.filter((c) => c !== category)
+        : [...prev, category]
+    );
+  };
+
   const activeTask = tasks.find((t) => t.id === activeId);
 
-  return (
+  // Mobile accordion view
+  const renderMobileAccordion = () => (
+    <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+      {/* Edit mode toolbar */}
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', px: 2, pt: 1.5, pb: 0.5 }}>
+        <Button
+          size="small"
+          startIcon={<EditIcon sx={{ fontSize: '0.9rem' }} />}
+          onClick={() => setEditMode((v) => !v)}
+          sx={{
+            fontSize: '0.78rem',
+            color: editMode ? THEME.accent : THEME.textMuted,
+            backgroundColor: editMode ? THEME.accentSoft : 'transparent',
+            border: editMode ? `1px solid ${THEME.accentSoftBorder}` : `1px solid transparent`,
+            borderRadius: 2,
+            px: 1.5,
+            py: 0.5,
+            textTransform: 'none',
+            '&:hover': {
+              backgroundColor: editMode ? THEME.accentSoft : 'rgba(255,255,255,0.04)',
+            },
+          }}
+        >
+          {editMode ? 'Done' : 'Edit'}
+        </Button>
+      </Box>
+
+      <Box sx={{ flex: 1, overflow: 'auto', px: 1.5, pb: 2 }}>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCorners}
+          onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
+          onDragEnd={handleDragEnd}
+        >
+          {categories.map((category) => {
+            const categoryTasks = getTasksByCategory(category);
+            const color = getCategoryColor(category, categories);
+            const isExpanded = expandedPanels.includes(category);
+
+            return (
+              <Accordion
+                key={category}
+                expanded={isExpanded}
+                onChange={() => handleAccordionToggle(category)}
+                disableGutters
+                elevation={0}
+                sx={{
+                  backgroundColor: THEME.surface,
+                  border: `1px solid ${isExpanded ? THEME.borderStrong : THEME.border}`,
+                  borderRadius: '12px !important',
+                  mb: 1,
+                  '&::before': { display: 'none' },
+                  '&.Mui-expanded': { margin: '0 0 8px 0' },
+                  overflow: 'hidden',
+                }}
+              >
+                <AccordionSummary
+                  expandIcon={<ExpandMoreIcon sx={{ color: THEME.textMuted, fontSize: '1.2rem' }} />}
+                  sx={{
+                    minHeight: 48,
+                    px: 2,
+                    '& .MuiAccordionSummary-content': {
+                      alignItems: 'center',
+                      gap: 1,
+                      my: 1,
+                    },
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 8,
+                      height: 8,
+                      borderRadius: '50%',
+                      backgroundColor: color,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ fontWeight: 600, color: THEME.text, fontSize: '0.85rem', flex: 1 }}
+                  >
+                    {category}
+                  </Typography>
+                  <Chip
+                    label={categoryTasks.length}
+                    size="small"
+                    sx={{
+                      height: 20,
+                      fontSize: '0.65rem',
+                      fontWeight: 600,
+                      backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                      color: THEME.textSecondary,
+                      border: 'none',
+                    }}
+                  />
+                  {editMode && categories.length > 1 && (
+                    <IconButton
+                      size="small"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteColumn(category);
+                      }}
+                      sx={{
+                        color: THEME.textMuted,
+                        width: 28,
+                        height: 28,
+                        ml: 0.5,
+                        '&:hover': { color: THEME.error },
+                      }}
+                    >
+                      <CloseIcon sx={{ fontSize: '0.85rem' }} />
+                    </IconButton>
+                  )}
+                </AccordionSummary>
+                <AccordionDetails sx={{ px: 1.5, pt: 0, pb: 1.5 }}>
+                  <SortableContext items={categoryTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
+                    {categoryTasks.length === 0 ? (
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 2 }}>
+                        <Typography variant="body2" sx={{ color: THEME.textMuted, fontSize: '0.8rem' }}>
+                          No tasks
+                        </Typography>
+                      </Box>
+                    ) : (
+                      categoryTasks.map((task) => (
+                        <SortableTaskCard
+                          key={task.id}
+                          task={task}
+                          onToggleComplete={toggleComplete}
+                          onClick={onTaskClick}
+                        />
+                      ))
+                    )}
+                  </SortableContext>
+                </AccordionDetails>
+              </Accordion>
+            );
+          })}
+
+          {editMode && (
+            <Box sx={{ mt: 1 }}>
+              <AddColumnButton onAdd={addCategory} />
+            </Box>
+          )}
+
+          <DragOverlay>
+            {activeTask ? (
+              <TaskCard
+                task={activeTask}
+                onToggleComplete={() => {}}
+                onClick={() => {}}
+                isDragging
+              />
+            ) : null}
+          </DragOverlay>
+        </DndContext>
+      </Box>
+
+      {/* Floating Action Button */}
+      <Fab
+        color="primary"
+        aria-label="add task"
+        onClick={onAddTask}
+        sx={{
+          position: 'fixed',
+          bottom: 80,
+          right: 16,
+          zIndex: 1000,
+          backgroundColor: THEME.accent,
+          '&:hover': { backgroundColor: THEME.accentHover },
+        }}
+      >
+        <AddIcon />
+      </Fab>
+    </Box>
+  );
+
+  // Desktop column view
+  const renderDesktopColumns = () => (
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
@@ -394,7 +585,7 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
             flex: 1,
             overflow: 'auto',
             alignItems: 'stretch',
-            flexDirection: { xs: 'column', md: 'row' },
+            flexDirection: 'row',
           }}
         >
           {categories.map((category) => (
@@ -433,6 +624,8 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
           bottom: 24,
           right: 24,
           zIndex: 1000,
+          backgroundColor: THEME.accent,
+          '&:hover': { backgroundColor: THEME.accentHover },
         }}
       >
         <AddIcon />
@@ -451,4 +644,6 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
       />
     </DndContext>
   );
+
+  return isMobile ? renderMobileAccordion() : renderDesktopColumns();
 }

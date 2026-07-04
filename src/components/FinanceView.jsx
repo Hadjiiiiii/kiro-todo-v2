@@ -44,7 +44,7 @@ export default function FinanceView() {
   };
 
   return (
-    <Box sx={{ p: 3, flex: 1, overflow: 'auto', maxWidth: 720, mx: 'auto', width: '100%' }}>
+    <Box sx={{ p: { xs: 1.5, md: 3 }, flex: 1, overflow: 'auto', maxWidth: 720, mx: 'auto', width: '100%' }}>
       {/* Balance Summary */}
       <Paper
         sx={{

@@ -18,7 +18,7 @@ function StatCard({ icon, label, value, color, subtitle }) {
         backgroundColor: THEME.surface,
         border: `1px solid ${THEME.border}`,
         flex: 1,
-        minWidth: 160,
+        minWidth: { xs: 130, sm: 160 },
       }}
       elevation={0}
     >
@@ -241,9 +241,9 @@ export default function StatsDashboard() {
   const journalRate = Math.round((journalEntriesThisMonth / daysElapsed) * 100);
 
   return (
-    <Box sx={{ p: 3, flex: 1, overflow: 'auto' }}>
+    <Box sx={{ p: { xs: 1.5, md: 3 }, flex: 1, overflow: 'auto' }}>
       {/* Top stat cards */}
-      <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
+      <Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, mb: 3, flexWrap: 'wrap' }}>
         <StatCard
           icon={<AssignmentIcon sx={{ color: THEME.accent, fontSize: '1.25rem' }} />}
           label="Total Tasks"

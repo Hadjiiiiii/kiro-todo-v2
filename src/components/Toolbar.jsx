@@ -34,8 +34,8 @@ export default function Toolbar({
         display: 'flex',
         alignItems: 'center',
         gap: 1.5,
-        px: 4,
-        py: 2,
+        px: { xs: 2, md: 4 },
+        py: { xs: 1.5, md: 2 },
         flexWrap: 'wrap',
         borderBottom: `1px solid ${THEME.border}`,
         backgroundColor: THEME.bg,
@@ -47,7 +47,7 @@ export default function Toolbar({
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
         sx={{
-          minWidth: 200,
+          minWidth: { xs: 0, sm: 200 },
           flex: { xs: '1 1 100%', sm: '0 1 auto' },
           '& .MuiOutlinedInput-root': {
             fontSize: '0.875rem',
@@ -62,7 +62,7 @@ export default function Toolbar({
           ),
         }}
       />
-      <FormControl size="small" sx={{ minWidth: 110 }}>
+      <FormControl size="small" sx={{ minWidth: { xs: 90, sm: 110 }, flex: { xs: '1 1 auto', sm: '0 1 auto' } }}>
         <InputLabel sx={{ fontSize: '0.875rem' }}>Priority</InputLabel>
         <Select
           value={priorityFilter}
@@ -78,7 +78,7 @@ export default function Toolbar({
           ))}
         </Select>
       </FormControl>
-      <FormControl size="small" sx={{ minWidth: 120 }}>
+      <FormControl size="small" sx={{ minWidth: { xs: 100, sm: 120 }, flex: { xs: '1 1 auto', sm: '0 1 auto' } }}>
         <InputLabel sx={{ fontSize: '0.875rem' }}>Due Date</InputLabel>
         <Select
           value={dueDateFilter}
@@ -108,7 +108,8 @@ export default function Toolbar({
         }
         sx={{ mx: 0 }}
       />
-      <Box sx={{ ml: 'auto' }}>
+      {/* ViewSwitcher hidden on mobile — bottom nav handles view switching */}
+      <Box sx={{ ml: 'auto', display: { xs: 'none', md: 'block' } }}>
         <ViewSwitcher currentView={currentView} onViewChange={onViewChange} />
       </Box>
     </Box>

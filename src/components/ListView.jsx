@@ -272,19 +272,21 @@ export default function ListView({ filteredTasks, onTaskClick }) {
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
     >
-      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+      <Box sx={{ display: 'flex', flex: 1, overflow: 'hidden', flexDirection: { xs: 'column', md: 'row' } }}>
         {/* Left panel: Active tasks */}
         <Box
           sx={{
-            width: '40%',
-            minWidth: 280,
-            borderRight: `1px solid ${THEME.border}`,
+            width: { xs: '100%', md: '40%' },
+            minWidth: { xs: 'auto', md: 280 },
+            borderRight: { xs: 'none', md: `1px solid ${THEME.border}` },
+            borderBottom: { xs: `1px solid ${THEME.border}`, md: 'none' },
             display: 'flex',
             flexDirection: 'column',
             overflow: 'hidden',
+            maxHeight: { xs: '40%', md: 'none' },
           }}
         >
-          <Box sx={{ px: 2.5, py: 1.5, borderBottom: `1px solid ${THEME.border}` }}>
+          <Box sx={{ px: { xs: 1.5, md: 2.5 }, py: 1.5, borderBottom: `1px solid ${THEME.border}` }}>
             <Typography
               variant="caption"
               sx={{
@@ -298,9 +300,9 @@ export default function ListView({ filteredTasks, onTaskClick }) {
               Active Tasks — {activeTasks.length}
             </Typography>
           </Box>
-          <Box sx={{ flex: 1, overflow: 'auto', p: 1.5 }}>
+          <Box sx={{ flex: 1, overflow: 'auto', p: { xs: 1, md: 1.5 } }}>
             {activeTasks.length === 0 ? (
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 120 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: { xs: 60, md: 120 } }}>
                 <Typography variant="body2" sx={{ color: THEME.textMuted, fontSize: '0.8rem' }}>
                   No active tasks
                 </Typography>
@@ -329,7 +331,7 @@ export default function ListView({ filteredTasks, onTaskClick }) {
               alignItems: 'center',
               justifyContent: 'center',
               gap: 1.5,
-              px: 2.5,
+              px: { xs: 1.5, md: 2.5 },
               py: 1.5,
               borderBottom: `1px solid ${THEME.border}`,
             }}

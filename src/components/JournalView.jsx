@@ -268,9 +268,9 @@ export default function JournalView({ initialDate }) {
   const isToday = currentDate.isSame(dayjs(), 'day');
 
   return (
-    <Box sx={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: 3, height: '100%', p: 3, overflow: 'hidden' }}>
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1.2fr 1fr' }, gap: { xs: 2, md: 3 }, height: '100%', p: { xs: 2, md: 3 }, overflow: 'auto' }}>
       {/* Left Panel — Daily Entry */}
-      <Box sx={{ overflow: 'auto', maxWidth: 720 }}>
+      <Box sx={{ overflow: { xs: 'visible', md: 'auto' }, maxWidth: 720 }}>
         {/* Date navigation */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, mb: 3 }}>
           <IconButton onClick={navigateBack} size="small" sx={{ color: THEME.textSecondary }}>

@@ -29,8 +29,8 @@ export default function GlassHeader({ currentView, taskCount, onAddTask }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        px: 4,
-        py: 2.5,
+        px: { xs: 2, md: 4 },
+        py: { xs: 1.5, md: 2.5 },
         borderBottom: `1px solid ${THEME.border}`,
         backgroundColor: THEME.bg,
       }}
@@ -43,7 +43,7 @@ export default function GlassHeader({ currentView, taskCount, onAddTask }) {
               fontWeight: 600,
               letterSpacing: '-0.02em',
               color: THEME.text,
-              fontSize: '1.75rem',
+              fontSize: { xs: '1.25rem', md: '1.75rem' },
             }}
           >
             {VIEW_TITLES[currentView]}
@@ -66,7 +66,7 @@ export default function GlassHeader({ currentView, taskCount, onAddTask }) {
         </Box>
         <Typography
           variant="body2"
-          sx={{ color: THEME.textMuted, mt: 0.5, fontSize: '0.85rem' }}
+          sx={{ color: THEME.textMuted, mt: 0.5, fontSize: '0.85rem', display: { xs: 'none', md: 'block' } }}
         >
           {VIEW_SUBTITLES[currentView]}
         </Typography>

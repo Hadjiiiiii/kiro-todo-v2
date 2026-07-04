@@ -353,7 +353,7 @@ export default function HabitView() {
   const [showForm, setShowForm] = useState(false);
 
   return (
-    <Box sx={{ p: 3, flex: 1, overflow: 'auto', maxWidth: 640, mx: 'auto', width: '100%' }}>
+    <Box sx={{ p: { xs: 1.5, md: 3 }, flex: 1, overflow: 'auto', maxWidth: 640, mx: 'auto', width: '100%' }}>
       {/* Add button */}
       {!showForm && (
         <Button

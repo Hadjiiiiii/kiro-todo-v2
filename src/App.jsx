@@ -1,10 +1,11 @@
 import { useState, useMemo } from 'react';
-import { Box } from '@mui/material';
+import { Box, useMediaQuery } from '@mui/material';
 import dayjs from 'dayjs';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import { useTaskContext } from './context/TaskContext';
 import { VIEWS } from './constants';
 import Sidebar from './components/Sidebar';
+import MobileNav from './components/MobileNav';
 import GlassHeader from './components/GlassHeader';
 import Toolbar from './components/Toolbar';
 import KanbanBoard from './components/KanbanBoard';
@@ -20,6 +21,7 @@ dayjs.extend(isSameOrBefore);
 
 export default function App() {
   const { tasks, stats, deleteTask } = useTaskContext();
+  const isDesktop = useMediaQuery('(min-width:768px)');
 
   // View state
   const [currentView, setCurrentView] = useState(VIEWS.KANBAN);
@@ -126,15 +128,17 @@ export default function App() {
 
   return (
     <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-      {/* Sidebar */}
-      <Sidebar
-        currentView={currentView}
-        onViewChange={setCurrentView}
-        stats={stats}
-      />
+      {/* Sidebar - desktop only */}
+      {isDesktop && (
+        <Sidebar
+          currentView={currentView}
+          onViewChange={setCurrentView}
+          stats={stats}
+        />
+      )}
 
       {/* Main content */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', pb: isDesktop ? 0 : '64px' }}>
         {/* Header */}
         <GlassHeader
           currentView={currentView}
@@ -163,6 +167,14 @@ export default function App() {
           {renderView()}
         </Box>
       </Box>
+
+      {/* Mobile bottom navigation */}
+      {!isDesktop && (
+        <MobileNav
+          currentView={currentView}
+          onViewChange={setCurrentView}
+        />
+      )}
 
       {/* Task dialog */}
       <TaskDialog

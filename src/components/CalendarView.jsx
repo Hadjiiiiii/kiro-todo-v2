@@ -76,16 +76,16 @@ export default function CalendarView({ filteredTasks, onTaskClick, onOpenJournal
       : currentDate.format('MMMM YYYY');
 
   return (
-    <Box sx={{ p: 2, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
+    <Box sx={{ p: { xs: 1.5, md: 2 }, flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative' }}>
       {/* Calendar header */}
-      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, md: 1 } }}>
           <IconButton onClick={navigateBack} size="small" sx={{ color: THEME.textSecondary }}>
             <ChevronLeftIcon />
           </IconButton>
           <Typography
             variant="subtitle1"
-            sx={{ fontWeight: 600, color: THEME.text, minWidth: 180, textAlign: 'center' }}
+            sx={{ fontWeight: 600, color: THEME.text, minWidth: { xs: 100, md: 180 }, textAlign: 'center', fontSize: { xs: '0.8rem', md: '1rem' } }}
           >
             {headerText}
           </Typography>
@@ -99,7 +99,7 @@ export default function CalendarView({ filteredTasks, onTaskClick, onOpenJournal
             sx={{
               height: 24,
               fontSize: '0.7rem',
-              ml: 1,
+              ml: { xs: 0.5, md: 1 },
               backgroundColor: THEME.accentSoft,
               color: THEME.accent,
               cursor: 'pointer',
@@ -120,7 +120,7 @@ export default function CalendarView({ filteredTasks, onTaskClick, onOpenJournal
             '& .MuiToggleButton-root': {
               border: `1px solid ${THEME.border}`,
               color: THEME.textMuted,
-              px: 1.5,
+              px: { xs: 1, md: 1.5 },
               py: 0.25,
               fontSize: '0.75rem',
               '&.Mui-selected': {
@@ -186,9 +186,9 @@ export default function CalendarView({ filteredTasks, onTaskClick, onOpenJournal
               key={day.format('YYYY-MM-DD')}
               onClick={() => setSelectedDay(day)}
               sx={{
-                minHeight: viewMode === 'week' ? 120 : 80,
+                minHeight: viewMode === 'week' ? { xs: 80, md: 120 } : { xs: 56, md: 80 },
                 borderRadius: 2,
-                p: 0.75,
+                p: { xs: 0.5, md: 0.75 },
                 cursor: 'pointer',
                 backgroundColor: isToday ? THEME.accentSoft : THEME.surface,
                 border: isToday

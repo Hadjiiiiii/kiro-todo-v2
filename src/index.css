@@ -82,3 +82,34 @@ body::before {
 [data-dragging="true"] * {
   transition: none !important;
 }
+
+/* Mobile touch improvements */
+@media (max-width: 767px) {
+  /* Remove tap highlight on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Contain overscroll to prevent page bounce */
+  .MuiBox-root {
+    overscroll-behavior: contain;
+  }
+
+  /* Hide scrollbars on mobile for cleaner look */
+  ::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+
+  /* Ensure tap targets are large enough */
+  button, [role="button"], .MuiIconButton-root, .MuiListItemButton-root {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Prevent text selection during touch interactions */
+  .MuiBottomNavigation-root {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}

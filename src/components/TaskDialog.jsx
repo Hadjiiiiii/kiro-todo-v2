@@ -19,6 +19,7 @@ import {
   ListItemText,
   Checkbox,
   Divider,
+  useMediaQuery,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -39,6 +40,7 @@ const defaultFormData = {
 
 export default function TaskDialog({ open, onClose, editTask, onDelete }) {
   const { addTask, updateTask, addSubtask, toggleSubtask, deleteSubtask, categories, addCategory } = useTaskContext();
+  const isMobile = useMediaQuery('(max-width:767px)');
   const [formData, setFormData] = useState(defaultFormData);
   const [errors, setErrors] = useState({});
   const [deleteConfirm, setDeleteConfirm] = useState(false);
@@ -128,7 +130,7 @@ export default function TaskDialog({ open, onClose, editTask, onDelete }) {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth fullScreen={isMobile}>
       <DialogTitle sx={{ pb: 1 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Typography variant="h5" sx={{ fontWeight: 600, color: THEME.text, fontSize: '1.4rem' }}>
