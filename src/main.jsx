@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { TaskProvider } from './context/TaskContext.jsx';
 import { HabitProvider } from './context/HabitContext.jsx';
 import { JournalProvider } from './context/JournalContext.jsx';
+import { FinanceProvider } from './context/FinanceContext.jsx';
 import LoginScreen from './components/LoginScreen.jsx';
 import { storageService } from './services/storageService.js';
 import { THEME } from './constants';
@@ -219,7 +220,9 @@ function AuthGate() {
     <TaskProvider>
       <HabitProvider>
         <JournalProvider>
-          <App />
+          <FinanceProvider>
+            <App />
+          </FinanceProvider>
         </JournalProvider>
       </HabitProvider>
     </TaskProvider>

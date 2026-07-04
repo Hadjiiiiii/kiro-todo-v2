@@ -16,7 +16,10 @@ export const VIEWS = {
   STATS: 'stats',
   HABITS: 'habits',
   JOURNAL: 'journal',
+  FINANCE: 'finance',
 };
+
+export const FINANCE_CATEGORIES = ['Food', 'Transport', 'Bills', 'Entertainment', 'Shopping', 'Salary', 'Freelance', 'Other'];
 
 export const RECURRENCE_PATTERNS = [
   { value: 'none', label: 'No repeat' },

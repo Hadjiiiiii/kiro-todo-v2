@@ -3,8 +3,11 @@ import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import WarningIcon from '@mui/icons-material/Warning';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import dayjs from 'dayjs';
 import { CATEGORY_COLORS, THEME } from '../constants';
 import { useTaskContext } from '../context/TaskContext';
+import { useJournalContext } from '../context/JournalContext';
 
 function StatCard({ icon, label, value, color, subtitle }) {
   return (
@@ -226,6 +229,16 @@ function CompletionRing({ rate }) {
 
 export default function StatsDashboard() {
   const { stats } = useTaskContext();
+  const { entries } = useJournalContext();
+
+  // Journal rate calculation
+  const monthPrefix = dayjs().format('YYYY-MM');
+  const daysElapsed = dayjs().date();
+  const journalEntriesThisMonth = Object.entries(entries).filter(([key, entry]) => {
+    if (!key.startsWith(monthPrefix)) return false;
+    return (entry.dump && entry.dump.trim().length > 0) || (entry.people && entry.people.length > 0);
+  }).length;
+  const journalRate = Math.round((journalEntriesThisMonth / daysElapsed) * 100);
 
   return (
     <Box sx={{ p: 3, flex: 1, overflow: 'auto' }}>
@@ -255,6 +268,13 @@ export default function StatsDashboard() {
           label="Overdue"
           value={stats.overdue}
           color={THEME.error}
+        />
+        <StatCard
+          icon={<MenuBookIcon sx={{ color: THEME.blue, fontSize: '1.25rem' }} />}
+          label="Journal Rate"
+          value={`${journalRate}%`}
+          color={THEME.blue}
+          subtitle={`${journalEntriesThisMonth} of ${daysElapsed} days`}
         />
       </Box>
 

@@ -5,6 +5,7 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
+import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { VIEWS, THEME } from '../constants';
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
   { id: VIEWS.HABITS, label: 'Habits', icon: <FitnessCenterIcon /> },
   { id: VIEWS.JOURNAL, label: 'Journal', icon: <MenuBookIcon /> },
   { id: VIEWS.STATS, label: 'Statistics', icon: <BarChartIcon /> },
+  { id: VIEWS.FINANCE, label: 'Finance', icon: <AccountBalanceWalletIcon /> },
 ];
 
 export default function Sidebar({ currentView, onViewChange, stats }) {

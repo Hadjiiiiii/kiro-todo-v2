@@ -34,12 +34,21 @@ export function JournalProvider({ children }) {
     return Array.from(peopleSet).sort();
   }, [entries]);
 
+  const getEntriesForPerson = useCallback((name) => {
+    return Object.entries(entries)
+      .filter(([, entry]) => entry.people && entry.people.includes(name))
+      .map(([date]) => date)
+      .sort()
+      .reverse();
+  }, [entries]);
+
   const value = useMemo(() => ({
     entries,
     getEntry,
     saveEntry,
     getAllPeople,
-  }), [entries, getEntry, saveEntry, getAllPeople]);
+    getEntriesForPerson,
+  }), [entries, getEntry, saveEntry, getAllPeople, getEntriesForPerson]);
 
   return (
     <JournalContext.Provider value={value}>

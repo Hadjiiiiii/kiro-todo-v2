@@ -139,6 +139,25 @@ export const storageService = {
     }
   },
 
+  getFinance() {
+    try {
+      const data = localStorage.getItem(key('finance'));
+      if (!data) return [];
+      const transactions = JSON.parse(data);
+      return Array.isArray(transactions) ? transactions : [];
+    } catch {
+      return [];
+    }
+  },
+
+  saveFinance(transactions) {
+    try {
+      localStorage.setItem(key('finance'), JSON.stringify(transactions));
+    } catch (error) {
+      console.error('Failed to save finance:', error);
+    }
+  },
+
   generateId() {
     return `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   },

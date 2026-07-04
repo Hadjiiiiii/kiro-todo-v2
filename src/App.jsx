@@ -13,6 +13,7 @@ import CalendarView from './components/CalendarView';
 import StatsDashboard from './components/StatsDashboard';
 import HabitView from './components/HabitView';
 import JournalView from './components/JournalView';
+import FinanceView from './components/FinanceView';
 import TaskDialog from './components/TaskDialog';
 
 dayjs.extend(isSameOrBefore);
@@ -105,7 +106,7 @@ export default function App() {
   const renderView = () => {
     switch (currentView) {
       case VIEWS.KANBAN:
-        return <KanbanBoard filteredTasks={filteredTasks} onTaskClick={handleTaskClick} />;
+        return <KanbanBoard filteredTasks={filteredTasks} onTaskClick={handleTaskClick} onAddTask={handleOpenCreate} />;
       case VIEWS.LIST:
         return <ListView filteredTasks={filteredTasks} onTaskClick={handleTaskClick} />;
       case VIEWS.CALENDAR:
@@ -116,8 +117,10 @@ export default function App() {
         return <HabitView />;
       case VIEWS.JOURNAL:
         return <JournalView initialDate={journalDate} />;
+      case VIEWS.FINANCE:
+        return <FinanceView />;
       default:
-        return <KanbanBoard filteredTasks={filteredTasks} onTaskClick={handleTaskClick} />;
+        return <KanbanBoard filteredTasks={filteredTasks} onTaskClick={handleTaskClick} onAddTask={handleOpenCreate} />;
     }
   };
 
@@ -140,7 +143,7 @@ export default function App() {
         />
 
         {/* Toolbar (hidden on stats view) */}
-        {currentView !== VIEWS.STATS && currentView !== VIEWS.HABITS && currentView !== VIEWS.JOURNAL && (
+        {currentView !== VIEWS.STATS && currentView !== VIEWS.HABITS && currentView !== VIEWS.JOURNAL && currentView !== VIEWS.FINANCE && (
           <Toolbar
             searchQuery={searchQuery}
             onSearchChange={setSearchQuery}

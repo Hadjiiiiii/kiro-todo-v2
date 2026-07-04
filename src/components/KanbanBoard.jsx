@@ -9,6 +9,7 @@ import {
   InputAdornment,
   Tooltip,
   Button,
+  Fab,
 } from '@mui/material';
 import {
   DndContext,
@@ -26,8 +27,9 @@ import EditIcon from '@mui/icons-material/Edit';
 import { THEME, getCategoryColor } from '../constants';
 import { useTaskContext } from '../context/TaskContext';
 import SortableTaskCard, { TaskCard } from './TaskCard';
+import CategoryZoomDialog from './CategoryZoomDialog';
 
-function KanbanColumn({ category, tasks, onToggleComplete, onTaskClick, onDelete, categories }) {
+function KanbanColumn({ category, tasks, onToggleComplete, onTaskClick, onDelete, categories, onColumnClick }) {
   const { setNodeRef, isOver } = useDroppable({ id: category });
   const color = getCategoryColor(category, categories);
 
@@ -36,7 +38,6 @@ function KanbanColumn({ category, tasks, onToggleComplete, onTaskClick, onDelete
       sx={{
         flex: 1,
         minWidth: 280,
-        maxWidth: 380,
         backgroundColor: isOver ? THEME.accentSoft : THEME.surface,
         border: isOver
           ? `1px solid ${THEME.accentSoftBorder}`
@@ -106,6 +107,11 @@ function KanbanColumn({ category, tasks, onToggleComplete, onTaskClick, onDelete
       </Box>
       <Box
         ref={setNodeRef}
+        onClick={(e) => {
+          if (e.target === e.currentTarget && onColumnClick) {
+            onColumnClick(category);
+          }
+        }}
         sx={{
           flex: 1,
           p: 1,
@@ -242,10 +248,11 @@ function AddColumnButton({ onAdd }) {
   );
 }
 
-export default function KanbanBoard({ filteredTasks, onTaskClick }) {
+export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
   const { tasks, categories, toggleComplete, reorderTasks, addCategory, deleteCategory } = useTaskContext();
   const [activeId, setActiveId] = useState(null);
   const [editMode, setEditMode] = useState(false);
+  const [zoomedCategory, setZoomedCategory] = useState(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -355,7 +362,7 @@ export default function KanbanBoard({ filteredTasks, onTaskClick }) {
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
         {/* Edit mode toolbar */}
-        <Box sx={{ display: 'flex', alignItems: 'center', px: 2, pt: 1.5, pb: 0.5 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', px: 2, pt: 1.5, pb: 0.5 }}>
           <Button
             size="small"
             startIcon={<EditIcon sx={{ fontSize: '0.9rem' }} />}
@@ -386,7 +393,7 @@ export default function KanbanBoard({ filteredTasks, onTaskClick }) {
             pt: 1,
             flex: 1,
             overflow: 'auto',
-            alignItems: 'flex-start',
+            alignItems: 'stretch',
             flexDirection: { xs: 'column', md: 'row' },
           }}
         >
@@ -399,9 +406,10 @@ export default function KanbanBoard({ filteredTasks, onTaskClick }) {
               onToggleComplete={toggleComplete}
               onTaskClick={onTaskClick}
               onDelete={editMode && categories.length > 1 ? handleDeleteColumn : null}
+              onColumnClick={setZoomedCategory}
             />
           ))}
-          <AddColumnButton onAdd={addCategory} />
+          {editMode && <AddColumnButton onAdd={addCategory} />}
         </Box>
       </Box>
       <DragOverlay>
@@ -414,6 +422,33 @@ export default function KanbanBoard({ filteredTasks, onTaskClick }) {
           />
         ) : null}
       </DragOverlay>
+
+      {/* Floating Action Button */}
+      <Fab
+        color="primary"
+        aria-label="add task"
+        onClick={onAddTask}
+        sx={{
+          position: 'fixed',
+          bottom: 24,
+          right: 24,
+          zIndex: 1000,
+        }}
+      >
+        <AddIcon />
+      </Fab>
+
+      {/* Category Zoom Dialog */}
+      <CategoryZoomDialog
+        open={!!zoomedCategory}
+        onClose={() => setZoomedCategory(null)}
+        category={zoomedCategory}
+        tasks={zoomedCategory ? getTasksByCategory(zoomedCategory) : []}
+        onToggleComplete={toggleComplete}
+        onTaskClick={onTaskClick}
+        onAddTask={onAddTask}
+        categories={categories}
+      />
     </DndContext>
   );
 }

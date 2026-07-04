@@ -9,6 +9,7 @@ const VIEW_TITLES = {
   [VIEWS.STATS]: 'Statistics',
   [VIEWS.HABITS]: 'Habits',
   [VIEWS.JOURNAL]: 'Journal',
+  [VIEWS.FINANCE]: 'Finance',
 };
 
 const VIEW_SUBTITLES = {
@@ -18,6 +19,7 @@ const VIEW_SUBTITLES = {
   [VIEWS.STATS]: 'Track your productivity',
   [VIEWS.HABITS]: 'Build consistent routines',
   [VIEWS.JOURNAL]: 'Reflect on your day',
+  [VIEWS.FINANCE]: 'Track your money',
 };
 
 export default function GlassHeader({ currentView, taskCount, onAddTask }) {
@@ -70,7 +72,7 @@ export default function GlassHeader({ currentView, taskCount, onAddTask }) {
         </Typography>
       </Box>
 
-      {currentView !== VIEWS.STATS && (
+      {currentView !== VIEWS.STATS && currentView !== VIEWS.KANBAN && currentView !== VIEWS.FINANCE && (
         <Tooltip title="Add new task">
           <IconButton
             onClick={onAddTask}
