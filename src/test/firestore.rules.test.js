@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, it } from 'vitest';
 import {
   assertFails,
   assertSucceeds,
@@ -41,15 +41,11 @@ describe('Firestore user data rules', () => {
     await assertSucceeds(
       setDoc(doc(alice.firestore(), 'users/alice/tasks/task-1'), { title: 'Private task' }),
     );
-    await expect(
-      assertFails(getDoc(doc(bob.firestore(), 'users/alice/tasks/task-1'))),
-    ).resolves.toBeUndefined();
-    await expect(
-      assertFails(
-        setDoc(doc(unverified.firestore(), 'users/unverified/tasks/task-1'), {
-          title: 'Unverified task',
-        }),
-      ),
-    ).resolves.toBeUndefined();
+    await assertFails(getDoc(doc(bob.firestore(), 'users/alice/tasks/task-1')));
+    await assertFails(
+      setDoc(doc(unverified.firestore(), 'users/unverified/tasks/task-1'), {
+        title: 'Unverified task',
+      }),
+    );
   });
 });
