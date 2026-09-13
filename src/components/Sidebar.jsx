@@ -22,7 +22,9 @@ const NAV_ITEMS = [
 ];
 
 export default function Sidebar({ currentView, onViewChange, stats }) {
-  const { currentUser, logout } = useAuth();
+  const { currentUser, signOut } = useAuth();
+  const accountLabel = currentUser?.displayName?.trim() || currentUser?.email || 'Account';
+  const avatarInitial = accountLabel.charAt(0).toUpperCase() || 'A';
 
   return (
     <Box
@@ -154,15 +156,15 @@ export default function Sidebar({ currentView, onViewChange, stats }) {
               fontWeight: 700,
             }}
           >
-            {currentUser?.username?.charAt(0).toUpperCase()}
+            {avatarInitial}
           </Avatar>
           <Typography variant="caption" sx={{ color: THEME.textSecondary, fontSize: '0.75rem' }}>
-            {currentUser?.username}
+            {accountLabel}
           </Typography>
         </Box>
         <IconButton
           size="small"
-          onClick={logout}
+          onClick={signOut}
           sx={{ color: THEME.textMuted, '&:hover': { color: THEME.error } }}
           title="Sign out"
         >

@@ -63,8 +63,9 @@ export async function sendPasswordReset(email) {
   try {
     await sendPasswordResetEmail(auth, address, actionCodeSettings);
     return { success: true };
-  } catch (error) {
-    return failure(mapAuthError(error));
+  } catch {
+    // Do not disclose whether an account exists or whether Firebase accepted the request.
+    return { success: true };
   }
 }
 

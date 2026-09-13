@@ -62,9 +62,11 @@ describe('AuthContext', () => {
     firebaseMocks.updatePassword.mockResolvedValue();
   });
 
-  it('sends verification after sign-up and keeps data access blocked', async () => {
+  it('sends verification after sign-up and keeps an authenticated unverified user blocked', async () => {
+    authStateUser = unverifiedUser;
     firebaseMocks.createUserWithEmailAndPassword.mockResolvedValue({ user: unverifiedUser });
     const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+    await waitFor(() => expect(result.current.currentUser).toBe(unverifiedUser));
 
     let signUpResult;
     await act(async () => {
@@ -77,7 +79,20 @@ describe('AuthContext', () => {
 
     expect(signUpResult).toEqual({ success: true });
     expect(firebaseMocks.sendEmailVerification).toHaveBeenCalledWith(unverifiedUser, expect.any(Object));
+    expect(result.current.isAuthenticated).toBe(true);
     expect(result.current.isVerified).toBe(false);
+  });
+
+  it('keeps password-reset results generic when Firebase cannot find an email', async () => {
+    firebaseMocks.sendPasswordResetEmail.mockRejectedValue({ code: 'auth/user-not-found' });
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+
+    let resetResult;
+    await act(async () => {
+      resetResult = await result.current.sendPasswordReset('missing@example.com');
+    });
+
+    expect(resetResult).toEqual({ success: true });
   });
 
   it('reauthenticates before updating a password', async () => {
