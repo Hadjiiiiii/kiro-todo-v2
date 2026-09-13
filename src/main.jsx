@@ -4,14 +4,8 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import App from './App.jsx';
-import { AuthProvider, useAuth } from './context/AuthContext.jsx';
-import { TaskProvider } from './context/TaskContext.jsx';
-import { HabitProvider } from './context/HabitContext.jsx';
-import { JournalProvider } from './context/JournalContext.jsx';
-import { FinanceProvider } from './context/FinanceContext.jsx';
-import LoginScreen from './components/LoginScreen.jsx';
-import VerifyEmailScreen from './components/VerifyEmailScreen.jsx';
+import { AuthProvider } from './context/AuthContext.jsx';
+import AuthGate from './components/AuthGate.jsx';
 import { THEME } from './constants';
 import './index.css';
 
@@ -202,34 +196,6 @@ const theme = createTheme({
     },
   },
 });
-
-function AuthGate() {
-  const { authReady, isAuthenticated, isVerified } = useAuth();
-
-  if (!authReady) {
-    return <div role="status">Loading your account…</div>;
-  }
-
-  if (!isAuthenticated) {
-    return <LoginScreen />;
-  }
-
-  if (!isVerified) {
-    return <VerifyEmailScreen />;
-  }
-
-  return (
-    <TaskProvider>
-      <HabitProvider>
-        <JournalProvider>
-          <FinanceProvider>
-            <App />
-          </FinanceProvider>
-        </JournalProvider>
-      </HabitProvider>
-    </TaskProvider>
-  );
-}
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
