@@ -50,6 +50,9 @@ directly, which is the helper's intended assertion contract. The unused
 - GREEN: `PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH" npm run test:rules`
   passed: `Test Files 1 passed (1)`, `Tests 1 passed (1)`, and the emulator
   script exited with code 0.
+- Full Vitest GREEN: `PATH="/opt/homebrew/opt/openjdk@21/bin:$PATH" npx
+  firebase emulators:exec --only firestore "npm run test:run"` passed:
+  `Test Files 1 passed (1)`, `Tests 1 passed (1)`, and exit code 0.
 - Final build: `npm run build` passed (`✓ built in 161ms`).
 
 ## Self-review
