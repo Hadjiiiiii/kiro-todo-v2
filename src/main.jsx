@@ -2,8 +2,6 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import App from './App.jsx';
 import { AuthProvider, useAuth } from './context/AuthContext.jsx';
 import { TaskProvider } from './context/TaskContext.jsx';
@@ -11,7 +9,7 @@ import { HabitProvider } from './context/HabitContext.jsx';
 import { JournalProvider } from './context/JournalContext.jsx';
 import { FinanceProvider } from './context/FinanceContext.jsx';
 import LoginScreen from './components/LoginScreen.jsx';
-import { storageService } from './services/storageService.js';
+import VerifyEmailScreen from './components/VerifyEmailScreen.jsx';
 import { THEME } from './constants';
 import './index.css';
 
@@ -25,7 +23,7 @@ const theme = createTheme({
       main: THEME.accent,
       light: '#e08e70',
       dark: THEME.accentHover,
-      contrastText: '#ffffff',
+      contrastText: THEME.onAccent,
     },
     secondary: {
       main: THEME.blue,
@@ -41,9 +39,9 @@ const theme = createTheme({
       secondary: THEME.textSecondary,
     },
     divider: THEME.border,
-    error: { main: THEME.error },
-    success: { main: THEME.success },
-    warning: { main: THEME.warning },
+    error: { main: THEME.error, contrastText: THEME.onAccent },
+    success: { main: THEME.success, contrastText: THEME.onAccent },
+    warning: { main: THEME.warning, contrastText: THEME.onAccent },
   },
   typography: {
     fontFamily: SANS,
@@ -109,6 +107,7 @@ const theme = createTheme({
         },
         contained: {
           backgroundColor: THEME.accent,
+          color: THEME.onAccent,
           boxShadow: 'none',
           '&:hover': {
             backgroundColor: THEME.accentHover,
@@ -135,7 +134,7 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           backgroundColor: THEME.accent,
-          color: '#ffffff',
+          color: THEME.onAccent,
           boxShadow: THEME.shadowLight,
           '&:hover': {
             backgroundColor: THEME.accentHover,
@@ -202,19 +201,20 @@ const theme = createTheme({
   },
 });
 
-/**
- * AuthGate: If authenticated, set the user prefix on storageService and render
- * the data providers + app. Otherwise, show the login screen.
- */
 function AuthGate() {
-  const { isAuthenticated, currentUser } = useAuth();
+  const { authReady, isAuthenticated, isVerified } = useAuth();
+
+  if (!authReady) {
+    return <div role="status">Loading your account…</div>;
+  }
 
   if (!isAuthenticated) {
     return <LoginScreen />;
   }
 
-  // Set user namespace for all storage operations
-  storageService.setUser(currentUser.username);
+  if (!isVerified) {
+    return <VerifyEmailScreen />;
+  }
 
   return (
     <TaskProvider>
@@ -233,11 +233,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <AuthProvider>
-          <AuthGate />
-        </AuthProvider>
-      </LocalizationProvider>
+      <AuthProvider>
+        <AuthGate />
+      </AuthProvider>
     </ThemeProvider>
   </React.StrictMode>
 );

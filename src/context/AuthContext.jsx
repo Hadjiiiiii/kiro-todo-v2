@@ -1,138 +1,75 @@
-import { createContext, useContext, useState, useCallback, useMemo } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../services/firebase.js';
+import * as authService from '../services/authService.js';
 
 const AuthContext = createContext(null);
 
-const USERS_KEY = 'taskeep-users';
-const SESSION_KEY = 'taskeep-session';
-
-/**
- * Simple hash for passwords (not cryptographically secure, but adequate
- * for local-only storage where the threat model is just account separation).
- */
-function simpleHash(str) {
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32bit integer
-  }
-  return hash.toString(36);
-}
-
-function getUsers() {
-  try {
-    const data = localStorage.getItem(USERS_KEY);
-    if (!data) return {};
-    return JSON.parse(data);
-  } catch {
-    return {};
-  }
-}
-
-function saveUsers(users) {
-  localStorage.setItem(USERS_KEY, JSON.stringify(users));
-}
-
-function getSession() {
-  try {
-    const data = localStorage.getItem(SESSION_KEY);
-    if (!data) return null;
-    return JSON.parse(data);
-  } catch {
-    return null;
-  }
-}
-
-function saveSession(user) {
-  if (user) {
-    localStorage.setItem(SESSION_KEY, JSON.stringify(user));
-  } else {
-    localStorage.removeItem(SESSION_KEY);
-  }
-}
-
 export function AuthProvider({ children }) {
-  const [currentUser, setCurrentUser] = useState(() => getSession());
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authReady, setAuthReady] = useState(false);
+  const [userVersion, setUserVersion] = useState(0);
 
-  /**
-   * Sign up a new account.
-   * Returns { success: true } or { success: false, error: "..." }
-   */
-  const signup = useCallback((username, password) => {
-    const trimmed = username.trim().toLowerCase();
-    if (!trimmed) return { success: false, error: 'Username is required' };
-    if (trimmed.length < 2) return { success: false, error: 'Username must be at least 2 characters' };
-    if (!password) return { success: false, error: 'Password is required' };
-    if (password.length < 4) return { success: false, error: 'Password must be at least 4 characters' };
+  useEffect(() => onAuthStateChanged(auth, (user) => {
+    setCurrentUser(user);
+    setAuthReady(true);
+  }), []);
 
-    const users = getUsers();
-    if (users[trimmed]) {
-      return { success: false, error: 'Account already exists' };
-    }
+  const signUp = useCallback(async (credentials) => authService.signUp(credentials), []);
+  const signIn = useCallback(async (credentials) => authService.signIn(credentials), []);
+  const signOut = useCallback(async () => authService.signOut(), []);
+  const sendPasswordReset = useCallback(async (email) => authService.sendPasswordReset(email), []);
+  const resendVerification = useCallback(async () => authService.resendVerification(currentUser), [currentUser]);
 
-    users[trimmed] = {
-      username: trimmed,
-      passwordHash: simpleHash(password),
-      createdAt: new Date().toISOString(),
-    };
-    saveUsers(users);
+  const refreshUser = useCallback(async () => {
+    const result = await authService.refreshUser(currentUser);
+    if (result.success) setUserVersion((version) => version + 1);
+    return result;
+  }, [currentUser]);
 
-    const session = { username: trimmed };
-    setCurrentUser(session);
-    saveSession(session);
-    return { success: true };
-  }, []);
+  const updateDisplayName = useCallback(async (displayName) => {
+    const result = await authService.updateDisplayName(currentUser, displayName);
+    if (result.success) setUserVersion((version) => version + 1);
+    return result;
+  }, [currentUser]);
 
-  /**
-   * Log in to an existing account.
-   */
-  const login = useCallback((username, password) => {
-    const trimmed = username.trim().toLowerCase();
-    if (!trimmed) return { success: false, error: 'Username is required' };
-    if (!password) return { success: false, error: 'Password is required' };
-
-    const users = getUsers();
-    const user = users[trimmed];
-    if (!user) {
-      return { success: false, error: 'Account not found' };
-    }
-    if (user.passwordHash !== simpleHash(password)) {
-      return { success: false, error: 'Incorrect password' };
-    }
-
-    const session = { username: trimmed };
-    setCurrentUser(session);
-    saveSession(session);
-    return { success: true };
-  }, []);
-
-  /**
-   * Log out the current user.
-   */
-  const logout = useCallback(() => {
-    setCurrentUser(null);
-    saveSession(null);
-  }, []);
+  const changePassword = useCallback(
+    async (passwords) => authService.changePassword(currentUser, passwords),
+    [currentUser],
+  );
 
   const value = useMemo(() => ({
     currentUser,
-    isAuthenticated: !!currentUser,
-    login,
-    signup,
-    logout,
-  }), [currentUser, login, signup, logout]);
+    authReady,
+    isAuthenticated: Boolean(currentUser),
+    isVerified: Boolean(currentUser?.emailVerified),
+    signUp,
+    signIn,
+    signOut,
+    sendPasswordReset,
+    resendVerification,
+    refreshUser,
+    updateDisplayName,
+    changePassword,
+  }), [
+    authReady,
+    changePassword,
+    currentUser,
+    refreshUser,
+    resendVerification,
+    sendPasswordReset,
+    signIn,
+    signOut,
+    signUp,
+    updateDisplayName,
+    userVersion,
+  ]);
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within an AuthProvider');
   return context;
 }
