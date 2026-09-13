@@ -7,7 +7,11 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "postinstall": "node scripts/patch-rollup.mjs"
+    "postinstall": "node scripts/patch-rollup.mjs",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "emulators": "firebase emulators:start --only auth,firestore",
+    "test:rules": "firebase emulators:exec --only firestore \"vitest run src/test/firestore.rules.test.js\""
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
@@ -20,13 +24,21 @@
     "@mui/x-date-pickers": "^9.8.0",
     "@rollup/wasm-node": "^4.62.2",
     "dayjs": "^1.11.21",
+    "firebase": "^12.19.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "@testing-library/jest-dom": "^7.0.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.7",
     "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.3",
-    "vite": "^8.1.3"
+    "firebase-tools": "^15.30.0",
+    "jsdom": "^30.0.1",
+    "vite": "^8.1.3",
+    "vitest": "^5.0.0"
   }
 }
