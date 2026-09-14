@@ -36,6 +36,10 @@ vi.mock('../context/FinanceContext.jsx', () => ({
   FinanceProvider: ({ children }) => <div data-testid="finance-provider">{children}</div>,
 }));
 
+vi.mock('../context/SettingsContext.jsx', () => ({
+  SettingsProvider: ({ children }) => <div data-testid="settings-provider">{children}</div>,
+}));
+
 describe('AuthGate', () => {
   beforeEach(() => {
     authState.value = {
