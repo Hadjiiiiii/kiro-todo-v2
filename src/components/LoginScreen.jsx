@@ -54,7 +54,7 @@ export default function LoginScreen() {
           <Typography variant="body2" sx={{ color: THEME.textMuted, fontSize: '0.85rem' }}>{isSignup ? 'Create your cloud account' : 'Welcome back'}</Typography>
           <Box sx={{ mt: 2, px: 2, py: 1.5, borderRadius: 2.5, backgroundColor: THEME.bg, border: `1px solid ${THEME.border}`, textAlign: 'left' }}>
             <Typography variant="body2" sx={{ color: THEME.textSecondary, fontSize: '0.78rem', lineHeight: 1.5 }}>
-              Your encrypted account session and records sync through Firebase. Verify your email before accessing your data.
+              Your TasKeep records synchronize through your cloud account. Verify your email before accessing your data.
             </Typography>
           </Box>
         </Box>

@@ -18,6 +18,7 @@ import FitnessCenterIcon from '@mui/icons-material/FitnessCenter';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import { VIEWS, THEME } from '../constants';
 
 const PRIMARY_ITEMS = [
@@ -35,7 +36,7 @@ const MORE_ITEMS = [
 
 const MORE_IDS = MORE_ITEMS.map((item) => item.id);
 
-export default function MobileNav({ currentView, onViewChange }) {
+export default function MobileNav({ currentView, onViewChange, onOpenAccount }) {
   const [moreOpen, setMoreOpen] = useState(false);
 
   // Determine which bottom nav item is active
@@ -58,6 +59,11 @@ export default function MobileNav({ currentView, onViewChange }) {
   const handleMoreItemClick = (viewId) => {
     onViewChange(viewId);
     setMoreOpen(false);
+  };
+
+  const handleOpenAccount = () => {
+    setMoreOpen(false);
+    onOpenAccount();
   };
 
   return (
@@ -188,6 +194,23 @@ export default function MobileNav({ currentView, onViewChange }) {
               />
             </ListItemButton>
           ))}
+          <ListItemButton
+            onClick={handleOpenAccount}
+            sx={{
+              borderRadius: 2.5,
+              mx: 1,
+              mb: 0.5,
+              py: 1.5,
+              minHeight: 48,
+              color: THEME.textSecondary,
+              '&:hover': { backgroundColor: 'rgba(255, 255, 255, 0.04)' },
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 40, color: THEME.textMuted }}>
+              <AccountCircleIcon />
+            </ListItemIcon>
+            <ListItemText primary="Account" slotProps={{ primary: { fontSize: '0.9rem', fontWeight: 500 } }} />
+          </ListItemButton>
         </List>
       </Drawer>
     </>

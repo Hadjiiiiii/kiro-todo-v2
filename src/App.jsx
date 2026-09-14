@@ -13,6 +13,7 @@ import MobileNav from './components/MobileNav';
 import GlassHeader from './components/GlassHeader';
 import Toolbar from './components/Toolbar';
 import KanbanBoard from './components/KanbanBoard';
+import AccountDialog from './components/AccountDialog';
 
 const ListView = lazy(() => import('./components/ListView'));
 const CalendarView = lazy(() => import('./components/CalendarView'));
@@ -53,6 +54,7 @@ export default function App() {
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [accountDialogOpen, setAccountDialogOpen] = useState(false);
   const [taskDialogReady, setTaskDialogReady] = useState(false);
   const [editTask, setEditTask] = useState(null);
   const [initialDueDate, setInitialDueDate] = useState(null);
@@ -215,6 +217,7 @@ export default function App() {
         <Sidebar
           currentView={currentView}
           onViewChange={handleViewChange}
+          onOpenAccount={() => setAccountDialogOpen(true)}
           stats={stats}
         />
       )}
@@ -265,8 +268,11 @@ export default function App() {
         <MobileNav
           currentView={currentView}
           onViewChange={handleViewChange}
+          onOpenAccount={() => setAccountDialogOpen(true)}
         />
       )}
+
+      <AccountDialog open={accountDialogOpen} onClose={() => setAccountDialogOpen(false)} />
 
       {taskDialogReady && (
         <Suspense fallback={null}>
