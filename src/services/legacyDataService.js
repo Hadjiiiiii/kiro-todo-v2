@@ -42,12 +42,15 @@ function parse(key, empty, isValid) {
 }
 
 function usernamesFromUsers() {
-  const users = parse('taskeep-users', [], Array.isArray);
-  return users
-    .filter(isPlainObject)
-    .map((user) => user.username)
-    .filter(hasText)
-    .map((username) => username.trim());
+  const users = parse('taskeep-users', null, (value) => Array.isArray(value) || isPlainObject(value));
+  if (Array.isArray(users)) {
+    return users
+      .filter(isPlainObject)
+      .map((user) => user.username)
+      .filter(hasText)
+      .map((username) => username.trim());
+  }
+  return isPlainObject(users) ? Object.keys(users).filter(hasText).map((username) => username.trim()) : [];
 }
 
 export function listAccounts() {

@@ -26,6 +26,12 @@ describe('legacyDataService', () => {
     expect(listAccounts()).toEqual({ accounts: ['ana', 'ben'], selectedUsername: 'ben' });
   });
 
+  it('finds usernames in the original object-keyed account store', () => {
+    localStorage.setItem('taskeep-users', JSON.stringify({ ana: { passwordHash: 'never-import' } }));
+
+    expect(listAccounts()).toEqual({ accounts: ['ana'], selectedUsername: null });
+  });
+
   it('returns safe empty records when legacy values are malformed or unexpected', () => {
     localStorage.setItem('old-user:tasks', '{');
     localStorage.setItem('old-user:categories', JSON.stringify({ not: 'an array' }));
