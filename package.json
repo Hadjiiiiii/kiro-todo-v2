@@ -9,9 +9,10 @@
     "preview": "vite preview",
     "postinstall": "node scripts/patch-rollup.mjs",
     "test": "vitest",
-    "test:run": "vitest run",
+    "test:run": "vitest run --exclude src/test/firestore.rules.test.js",
     "emulators": "firebase emulators:start --only auth,firestore",
-    "test:rules": "firebase emulators:exec --only firestore \"vitest run src/test/firestore.rules.test.js\""
+    "test:rules": "firebase emulators:exec --only firestore \"vitest run src/test/firestore.rules.test.js\"",
+    "verify": "npm run test:run && npm run test:rules && npm run build"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",
