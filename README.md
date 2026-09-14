@@ -8,7 +8,7 @@ Requirements:
 
 - Node.js and npm
 - Java 21 to run the local Firestore Emulator
-- A Firebase project that you control; do not commit Firebase values or other secrets
+- A Firebase project that you control; never commit genuine secrets
 
 Install dependencies and create your local Firebase configuration:
 
@@ -26,7 +26,7 @@ VITE_FIREBASE_PROJECT_ID=
 VITE_FIREBASE_APP_ID=
 ```
 
-`VITE_USE_FIREBASE_EMULATORS=true` is optional and enables local Auth and Firestore emulator connections during development. `.env.local` is local-only configuration: never commit its contents or paste credentials into documentation.
+`VITE_USE_FIREBASE_EMULATORS=true` is optional and enables local Auth and Firestore emulator connections during development. `.env.local` keeps project-specific configuration out of this repository. Firebase web configuration identifies the app; it is not a credential. Restrict its API key and protect data with Firestore Rules.
 
 ## Firebase Console setup
 

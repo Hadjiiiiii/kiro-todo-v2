@@ -40,7 +40,7 @@ users/{uid}/meta/migration
 
 ## Required Console Configuration
 
-1. Create a Firebase project on the Spark plan and register a web app. Keep the resulting local configuration in `.env.local`, never in source control.
+1. Create a Firebase project on the Spark plan and register a web app. Keep project-specific configuration in `.env.local`; Firebase web configuration identifies the app and is not a credential. Restrict its API key and rely on Firestore Rules for data access.
 2. In Firestore Database, create and confirm a Standard Cloud Firestore database.
 3. Enable the Authentication Email/Password provider.
 4. Set and enforce a password policy: minimum 12 characters; require lowercase, uppercase, number, and non-alphanumeric character.
