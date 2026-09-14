@@ -8,6 +8,7 @@ export function SettingsProvider({ children }) {
   const { currentUser, isVerified } = useAuth();
   const uid = isVerified ? currentUser?.uid : null;
   const [settings, setSettings] = useState({});
+  const [migration, setMigration] = useState(null);
   const [ready, setReady] = useState(false);
   const [syncError, setSyncError] = useState(false);
   const settingsRef = useRef(settings);
@@ -18,30 +19,59 @@ export function SettingsProvider({ children }) {
 
   useEffect(() => {
     setSettings({});
+    setMigration(null);
     setReady(false);
     setSyncError(false);
 
     if (!uid) return undefined;
 
     let active = true;
-    const unsubscribe = subscribeDocument(
+    let settingsReady = false;
+    let migrationReady = false;
+    const markReady = () => {
+      if (active && settingsReady && migrationReady) setReady(true);
+    };
+    const fail = () => {
+      if (active) setSyncError(true);
+    };
+    const unsubscribeSettings = subscribeDocument(
       uid,
       'settings',
       'preferences',
       (value) => {
         if (!active) return;
         setSettings(value || {});
-        setReady(true);
+        settingsReady = true;
+        markReady();
       },
       () => {
         if (!active) return;
-        setSyncError(true);
-        setReady(true);
+        settingsReady = true;
+        fail();
+        markReady();
+      },
+    );
+    const unsubscribeMigration = subscribeDocument(
+      uid,
+      'meta',
+      'migration',
+      (value) => {
+        if (!active) return;
+        setMigration(value || null);
+        migrationReady = true;
+        markReady();
+      },
+      () => {
+        if (!active) return;
+        migrationReady = true;
+        fail();
+        markReady();
       },
     );
     return () => {
       active = false;
-      unsubscribe();
+      unsubscribeSettings();
+      unsubscribeMigration();
     };
   }, [uid]);
 
@@ -58,14 +88,19 @@ export function SettingsProvider({ children }) {
     }
   }, [ready, uid]);
 
+  const refreshMigration = useCallback((value) => {
+    if (value && typeof value === 'object') setMigration(value);
+  }, []);
+
   const value = useMemo(() => ({
     settings,
     onboardingCompleted: Boolean(settings.onboardingCompleted),
     ready,
     syncError,
-    migration: settings.migration || null,
+    migration: migration || settings.migration || null,
     completeOnboarding,
-  }), [completeOnboarding, ready, settings, syncError]);
+    refreshMigration,
+  }), [completeOnboarding, migration, ready, refreshMigration, settings, syncError]);
 
   return <SettingsContext.Provider value={value}>{children}</SettingsContext.Provider>;
 }

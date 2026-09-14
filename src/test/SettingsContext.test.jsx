@@ -18,8 +18,10 @@ vi.mock('../context/AuthContext.jsx', () => ({ useAuth: () => auth }));
 describe('SettingsContext', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    cloud.subscribeDocument.mockImplementation((_uid, _collection, _id, onValue) => {
-      onValue({ onboardingCompleted: false, migration: { completedAt: '2026-09-01' } });
+    cloud.subscribeDocument.mockImplementation((_uid, collection, _id, onValue) => {
+      onValue(collection === 'settings'
+        ? { onboardingCompleted: false, migration: { completedAt: '2026-09-01' } }
+        : null);
       return vi.fn();
     });
   });
@@ -59,13 +61,15 @@ describe('SettingsContext', () => {
     const { result, rerender } = renderHook(() => useSettingsContext(), { wrapper: SettingsProvider });
     await act(async () => {
       callbacks[0]({ onboardingCompleted: false });
+      callbacks[1](null);
     });
     await waitFor(() => expect(result.current.ready).toBe(true));
 
     auth.currentUser = { uid: 'bob' };
     rerender();
     await act(async () => {
-      callbacks[1]({ onboardingCompleted: true });
+      callbacks[2]({ onboardingCompleted: true });
+      callbacks[3](null);
     });
     await waitFor(() => expect(result.current.settings).toEqual({ onboardingCompleted: true }));
 
@@ -73,5 +77,24 @@ describe('SettingsContext', () => {
       callbacks[0]({ onboardingCompleted: false });
     });
     expect(result.current.settings).toEqual({ onboardingCompleted: true });
+  });
+
+  it('refreshes migration state immediately after a successful import', async () => {
+    const { result } = renderHook(() => useSettingsContext(), { wrapper: SettingsProvider });
+    await waitFor(() => expect(result.current.ready).toBe(true));
+
+    act(() => {
+      result.current.refreshMigration({
+        sourceUsername: 'old-user',
+        importedAt: '2026-09-14T00:00:00.000Z',
+        counts: { tasks: 1 },
+      });
+    });
+
+    expect(result.current.migration).toMatchObject({
+      sourceUsername: 'old-user',
+      importedAt: '2026-09-14T00:00:00.000Z',
+      counts: { tasks: 1 },
+    });
   });
 });
