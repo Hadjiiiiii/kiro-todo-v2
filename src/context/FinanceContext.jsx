@@ -1,120 +1,51 @@
-import { createContext, useContext, useReducer, useEffect, useMemo, useCallback } from 'react';
-import { storageService } from '../services/storageService';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { useAuth } from './AuthContext.jsx';
+import { removeRecord, setRecord, subscribeCollection } from '../services/cloudDataService.js';
 
 const FinanceContext = createContext(null);
-
-const ACTION_TYPES = {
-  SET_TRANSACTIONS: 'SET_TRANSACTIONS',
-  ADD_TRANSACTION: 'ADD_TRANSACTION',
-  DELETE_TRANSACTION: 'DELETE_TRANSACTION',
-};
-
-function financeReducer(state, action) {
-  switch (action.type) {
-    case ACTION_TYPES.SET_TRANSACTIONS:
-      return { ...state, transactions: action.payload };
-
-    case ACTION_TYPES.ADD_TRANSACTION: {
-      const newTransaction = {
-        ...action.payload,
-        id: `fin_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      };
-      return { ...state, transactions: [...state.transactions, newTransaction] };
-    }
-
-    case ACTION_TYPES.DELETE_TRANSACTION: {
-      return { ...state, transactions: state.transactions.filter((t) => t.id !== action.payload) };
-    }
-
-    default:
-      return state;
-  }
-}
-
-const initialState = {
-  transactions: [],
-};
+function makeId() { return `fin_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`; }
 
 export function FinanceProvider({ children }) {
-  const [state, dispatch] = useReducer(financeReducer, initialState);
-
-  // Load from localStorage on mount
+  const { currentUser, isVerified } = useAuth();
+  const uid = isVerified ? currentUser?.uid : null;
+  const [records, setRecords] = useState([]);
+  const [ready, setReady] = useState(false);
+  const [syncError, setSyncError] = useState(false);
   useEffect(() => {
-    const transactions = storageService.getFinance();
-    dispatch({ type: ACTION_TYPES.SET_TRANSACTIONS, payload: transactions });
-  }, []);
+    setRecords([]); setReady(false); setSyncError(false);
+    if (!uid) return undefined;
+    let active = true;
+    const unsubscribe = subscribeCollection(uid, 'finance', (transactions) => {
+      if (!active) return;
+      setRecords(transactions); setReady(true);
+    }, () => { if (active) { setSyncError(true); setReady(true); } });
+    return () => { active = false; unsubscribe(); };
+  }, [uid]);
+  const addTransaction = useCallback(async (transaction) => {
+    const next = { ...transaction, id: makeId() };
+    try { await setRecord(uid, 'finance', next.id, next); return next; } catch { setSyncError(true); return null; }
+  }, [uid]);
+  const deleteTransaction = useCallback(async (id) => {
+    try { await removeRecord(uid, 'finance', id); return true; } catch { setSyncError(true); return false; }
+  }, [uid]);
+  const transactions = useMemo(() => [...records].sort((left, right) => new Date(right.date) - new Date(left.date)), [records]);
+  const balance = useMemo(() => records.reduce((total, transaction) => transaction.type === 'income' ? total + transaction.amount : total - transaction.amount, 0), [records]);
+  const monthlyIncome = useMemo(() => monthlyTotal(records, 'income'), [records]);
+  const monthlyExpense = useMemo(() => monthlyTotal(records, 'expense'), [records]);
+  const value = useMemo(() => ({ transactions, balance, monthlyIncome, monthlyExpense, ready, syncError, storageError: syncError, addTransaction, deleteTransaction }), [transactions, balance, monthlyIncome, monthlyExpense, ready, syncError, addTransaction, deleteTransaction]);
+  return <FinanceContext.Provider value={value}>{children}</FinanceContext.Provider>;
+}
 
-  // Save to localStorage whenever transactions change
-  useEffect(() => {
-    storageService.saveFinance(state.transactions);
-  }, [state.transactions]);
-
-  const addTransaction = useCallback((transaction) => {
-    dispatch({ type: ACTION_TYPES.ADD_TRANSACTION, payload: transaction });
-  }, []);
-
-  const deleteTransaction = useCallback((id) => {
-    dispatch({ type: ACTION_TYPES.DELETE_TRANSACTION, payload: id });
-  }, []);
-
-  // Sorted by date descending
-  const transactions = useMemo(() => {
-    return [...state.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
-  }, [state.transactions]);
-
-  // Balance: income - expenses
-  const balance = useMemo(() => {
-    return state.transactions.reduce((acc, t) => {
-      return t.type === 'income' ? acc + t.amount : acc - t.amount;
-    }, 0);
-  }, [state.transactions]);
-
-  // Monthly income (current month)
-  const monthlyIncome = useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    return state.transactions
-      .filter((t) => {
-        const d = new Date(t.date);
-        return t.type === 'income' && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-      })
-      .reduce((acc, t) => acc + t.amount, 0);
-  }, [state.transactions]);
-
-  // Monthly expense (current month)
-  const monthlyExpense = useMemo(() => {
-    const now = new Date();
-    const currentMonth = now.getMonth();
-    const currentYear = now.getFullYear();
-    return state.transactions
-      .filter((t) => {
-        const d = new Date(t.date);
-        return t.type === 'expense' && d.getMonth() === currentMonth && d.getFullYear() === currentYear;
-      })
-      .reduce((acc, t) => acc + t.amount, 0);
-  }, [state.transactions]);
-
-  return (
-    <FinanceContext.Provider
-      value={{
-        transactions,
-        balance,
-        monthlyIncome,
-        monthlyExpense,
-        addTransaction,
-        deleteTransaction,
-      }}
-    >
-      {children}
-    </FinanceContext.Provider>
-  );
+function monthlyTotal(transactions, type) {
+  const today = new Date();
+  return transactions.filter((transaction) => {
+    const date = new Date(transaction.date);
+    return transaction.type === type && date.getMonth() === today.getMonth() && date.getFullYear() === today.getFullYear();
+  }).reduce((total, transaction) => total + transaction.amount, 0);
 }
 
 export function useFinanceContext() {
   const context = useContext(FinanceContext);
-  if (!context) {
-    throw new Error('useFinanceContext must be used within a FinanceProvider');
-  }
+  if (!context) throw new Error('useFinanceContext must be used within a FinanceProvider');
   return context;
 }

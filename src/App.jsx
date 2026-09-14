@@ -1,27 +1,49 @@
-import { useState, useMemo } from 'react';
-import { Box, useMediaQuery } from '@mui/material';
+import { lazy, Suspense, startTransition, useCallback, useEffect, useState, useMemo } from 'react';
+import { Alert, Box, useMediaQuery } from '@mui/material';
 import dayjs from 'dayjs';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import { useTaskContext } from './context/TaskContext';
+import { useHabitContext } from './context/HabitContext';
+import { useJournalContext } from './context/JournalContext';
+import { useFinanceContext } from './context/FinanceContext';
+import { useSettingsContext } from './context/SettingsContext';
 import { VIEWS } from './constants';
 import Sidebar from './components/Sidebar';
 import MobileNav from './components/MobileNav';
 import GlassHeader from './components/GlassHeader';
 import Toolbar from './components/Toolbar';
 import KanbanBoard from './components/KanbanBoard';
-import ListView from './components/ListView';
-import CalendarView from './components/CalendarView';
-import StatsDashboard from './components/StatsDashboard';
-import HabitView from './components/HabitView';
-import JournalView from './components/JournalView';
-import FinanceView from './components/FinanceView';
-import TaskDialog from './components/TaskDialog';
+
+const ListView = lazy(() => import('./components/ListView'));
+const CalendarView = lazy(() => import('./components/CalendarView'));
+const StatsDashboard = lazy(() => import('./components/StatsDashboard'));
+const HabitView = lazy(() => import('./components/HabitView'));
+const JournalView = lazy(() => import('./components/JournalView'));
+const FinanceView = lazy(() => import('./components/FinanceView'));
+const TaskDialog = lazy(() => import('./components/TaskDialog'));
+
+function ViewFallback() {
+  return (
+    <Box
+      sx={{ flex: 1 }}
+      role="status"
+      aria-live="polite"
+      aria-label="Opening view"
+    />
+  );
+}
 
 dayjs.extend(isSameOrBefore);
 
 export default function App() {
-  const { tasks, stats, deleteTask } = useTaskContext();
+  const { tasks, stats, deleteTask, ready: tasksReady, syncError: taskSyncError } = useTaskContext();
+  const { ready: habitsReady, syncError: habitSyncError } = useHabitContext();
+  const { ready: journalReady, syncError: journalSyncError } = useJournalContext();
+  const { ready: financeReady, syncError: financeSyncError } = useFinanceContext();
+  const { onboardingCompleted, completeOnboarding, ready: settingsReady, syncError: settingsSyncError } = useSettingsContext();
   const isDesktop = useMediaQuery('(min-width:768px)');
+  const allDataReady = tasksReady && habitsReady && journalReady && financeReady && settingsReady;
+  const hasSyncError = taskSyncError || habitSyncError || journalSyncError || financeSyncError || settingsSyncError;
 
   // View state
   const [currentView, setCurrentView] = useState(VIEWS.KANBAN);
@@ -31,7 +53,10 @@ export default function App() {
 
   // Dialog state
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [taskDialogReady, setTaskDialogReady] = useState(false);
   const [editTask, setEditTask] = useState(null);
+  const [initialDueDate, setInitialDueDate] = useState(null);
+  const showOnboarding = !onboardingCompleted;
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -81,6 +106,13 @@ export default function App() {
 
   const handleOpenCreate = () => {
     setEditTask(null);
+    setInitialDueDate(null);
+    setDialogOpen(true);
+  };
+
+  const handleOpenTodayTask = () => {
+    setEditTask(null);
+    setInitialDueDate(dayjs().startOf('day'));
     setDialogOpen(true);
   };
 
@@ -92,6 +124,16 @@ export default function App() {
   const handleCloseDialog = () => {
     setDialogOpen(false);
     setEditTask(null);
+    setInitialDueDate(null);
+  };
+
+  const filtersActive = Boolean(searchQuery) || priorityFilter !== 'All' || dueDateFilter !== 'All' || showCompleted;
+
+  const clearFilters = () => {
+    setSearchQuery('');
+    setPriorityFilter('All');
+    setDueDateFilter('All');
+    setShowCompleted(false);
   };
 
   const handleDelete = (id) => {
@@ -100,15 +142,46 @@ export default function App() {
 
   const activeTaskCount = tasks.filter((t) => !t.completed).length;
 
+  const handleViewChange = useCallback((view) => {
+    startTransition(() => {
+      setCurrentView(view);
+    });
+  }, []);
+
   const handleOpenJournal = (date) => {
     setJournalDate(date);
-    setCurrentView(VIEWS.JOURNAL);
+    startTransition(() => {
+      setCurrentView(VIEWS.JOURNAL);
+    });
   };
+
+  useEffect(() => {
+    if (dialogOpen) setTaskDialogReady(true);
+  }, [dialogOpen]);
+
+  useEffect(() => {
+    if (showOnboarding && tasks.length > 0) {
+      completeOnboarding();
+    }
+  }, [completeOnboarding, showOnboarding, tasks.length]);
+
+  if (!allDataReady) {
+    return <Box role="status" sx={{ p: 3 }}>Synchronizing your TasKeep records…</Box>;
+  }
 
   const renderView = () => {
     switch (currentView) {
       case VIEWS.KANBAN:
-        return <KanbanBoard filteredTasks={filteredTasks} onTaskClick={handleTaskClick} onAddTask={handleOpenCreate} />;
+        return (
+          <KanbanBoard
+            filteredTasks={filteredTasks}
+            onTaskClick={handleTaskClick}
+            onAddTask={handleOpenCreate}
+            onAddTodayTask={handleOpenTodayTask}
+            showOnboarding={showOnboarding}
+            onDismissOnboarding={completeOnboarding}
+          />
+        );
       case VIEWS.LIST:
         return <ListView filteredTasks={filteredTasks} onTaskClick={handleTaskClick} />;
       case VIEWS.CALENDAR:
@@ -122,29 +195,44 @@ export default function App() {
       case VIEWS.FINANCE:
         return <FinanceView />;
       default:
-        return <KanbanBoard filteredTasks={filteredTasks} onTaskClick={handleTaskClick} onAddTask={handleOpenCreate} />;
+        return (
+          <KanbanBoard
+            filteredTasks={filteredTasks}
+            onTaskClick={handleTaskClick}
+            onAddTask={handleOpenCreate}
+            onAddTodayTask={handleOpenTodayTask}
+            showOnboarding={showOnboarding}
+            onDismissOnboarding={completeOnboarding}
+          />
+        );
     }
   };
 
   return (
-    <Box sx={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+    <Box sx={{ display: 'flex', height: '100dvh', overflow: 'hidden', pt: 'env(safe-area-inset-top)' }}>
       {/* Sidebar - desktop only */}
       {isDesktop && (
         <Sidebar
           currentView={currentView}
-          onViewChange={setCurrentView}
+          onViewChange={handleViewChange}
           stats={stats}
         />
       )}
 
       {/* Main content */}
-      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', pb: isDesktop ? 0 : '64px' }}>
+      <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', pb: isDesktop ? 0 : 'calc(64px + env(safe-area-inset-bottom))' }} component="main">
         {/* Header */}
         <GlassHeader
           currentView={currentView}
           taskCount={activeTaskCount}
           onAddTask={handleOpenCreate}
         />
+
+        {hasSyncError && (
+          <Alert severity="error" role="alert" sx={{ borderRadius: 0 }}>
+            TasKeep could not synchronize your latest changes. Check your connection, then try again.
+          </Alert>
+        )}
 
         {/* Toolbar (hidden on stats view) */}
         {currentView !== VIEWS.STATS && currentView !== VIEWS.HABITS && currentView !== VIEWS.JOURNAL && currentView !== VIEWS.FINANCE && (
@@ -158,13 +246,17 @@ export default function App() {
             showCompleted={showCompleted}
             onShowCompletedChange={setShowCompleted}
             currentView={currentView}
-            onViewChange={setCurrentView}
+            onViewChange={handleViewChange}
+            filtersActive={filtersActive}
+            onClearFilters={clearFilters}
           />
         )}
 
         {/* View content */}
         <Box sx={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-          {renderView()}
+          <Suspense fallback={<ViewFallback />}>
+            {renderView()}
+          </Suspense>
         </Box>
       </Box>
 
@@ -172,17 +264,21 @@ export default function App() {
       {!isDesktop && (
         <MobileNav
           currentView={currentView}
-          onViewChange={setCurrentView}
+          onViewChange={handleViewChange}
         />
       )}
 
-      {/* Task dialog */}
-      <TaskDialog
-        open={dialogOpen}
-        onClose={handleCloseDialog}
-        editTask={editTask}
-        onDelete={handleDelete}
-      />
+      {taskDialogReady && (
+        <Suspense fallback={null}>
+          <TaskDialog
+            open={dialogOpen}
+            onClose={handleCloseDialog}
+            editTask={editTask}
+            initialDueDate={initialDueDate}
+            onDelete={handleDelete}
+          />
+        </Suspense>
+      )}
     </Box>
   );
 }

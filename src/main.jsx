@@ -5,6 +5,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { AuthProvider } from './context/AuthContext.jsx';
+import { SettingsProvider } from './context/SettingsContext.jsx';
 import AuthGate from './components/AuthGate.jsx';
 import { THEME } from './constants';
 import './index.css';
@@ -203,7 +204,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <CssBaseline />
       <LocalizationProvider dateAdapter={AdapterDayjs}>
         <AuthProvider>
-          <AuthGate />
+          <SettingsProvider>
+            <AuthGate />
+          </SettingsProvider>
         </AuthProvider>
       </LocalizationProvider>
     </ThemeProvider>

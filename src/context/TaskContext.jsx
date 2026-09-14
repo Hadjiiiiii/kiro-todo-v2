@@ -1,325 +1,140 @@
-import { createContext, useContext, useReducer, useState, useEffect, useMemo, useCallback } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import dayjs from 'dayjs';
-import { storageService } from '../services/storageService';
+import { DEFAULT_CATEGORIES } from '../constants';
+import { useAuth } from './AuthContext.jsx';
+import { removeRecord, setDocument, setRecord, subscribeCollection, subscribeDocument } from '../services/cloudDataService.js';
 
 const TaskContext = createContext(null);
 
-const ACTION_TYPES = {
-  SET_TASKS: 'SET_TASKS',
-  ADD_TASK: 'ADD_TASK',
-  UPDATE_TASK: 'UPDATE_TASK',
-  DELETE_TASK: 'DELETE_TASK',
-  TOGGLE_COMPLETE: 'TOGGLE_COMPLETE',
-  REORDER_TASKS: 'REORDER_TASKS',
-  ADD_SUBTASK: 'ADD_SUBTASK',
-  TOGGLE_SUBTASK: 'TOGGLE_SUBTASK',
-  DELETE_SUBTASK: 'DELETE_SUBTASK',
-  ACCOMPLISH_TASK: 'ACCOMPLISH_TASK',
-};
+function makeId(prefix) {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+}
 
 function getNextDueDate(currentDue, pattern) {
   const date = dayjs(currentDue);
   switch (pattern) {
-    case 'daily':
-      return date.add(1, 'day').toISOString();
-    case 'weekly':
-      return date.add(1, 'week').toISOString();
-    case 'biweekly':
-      return date.add(2, 'week').toISOString();
-    case 'monthly':
-      return date.add(1, 'month').toISOString();
-    default:
-      return null;
+    case 'daily': return date.add(1, 'day').toISOString();
+    case 'weekly': return date.add(1, 'week').toISOString();
+    case 'biweekly': return date.add(2, 'week').toISOString();
+    case 'monthly': return date.add(1, 'month').toISOString();
+    default: return null;
   }
 }
 
-function taskReducer(state, action) {
-  switch (action.type) {
-    case ACTION_TYPES.SET_TASKS:
-      return { ...state, tasks: action.payload };
-
-    case ACTION_TYPES.ADD_TASK: {
-      const newTask = {
-        ...action.payload,
-        id: storageService.generateId(),
-        completed: false,
-        createdAt: new Date().toISOString(),
-        completedAt: null,
-        subtasks: action.payload.subtasks || [],
-        recurrence: action.payload.recurrence || 'none',
-        order: state.tasks.filter((t) => t.category === action.payload.category).length,
-      };
-      return { ...state, tasks: [...state.tasks, newTask] };
-    }
-
-    case ACTION_TYPES.UPDATE_TASK: {
-      const tasks = state.tasks.map((task) =>
-        task.id === action.payload.id ? { ...task, ...action.payload } : task
-      );
-      return { ...state, tasks };
-    }
-
-    case ACTION_TYPES.DELETE_TASK: {
-      const tasks = state.tasks.filter((task) => task.id !== action.payload);
-      return { ...state, tasks };
-    }
-
-    case ACTION_TYPES.TOGGLE_COMPLETE: {
-      let tasks = state.tasks.map((task) => {
-        if (task.id !== action.payload) return task;
-        const nowCompleted = !task.completed;
-        return {
-          ...task,
-          completed: nowCompleted,
-          completedAt: nowCompleted ? new Date().toISOString() : null,
-        };
-      });
-
-      // If completing a recurring task, create next instance
-      const toggledTask = tasks.find((t) => t.id === action.payload);
-      if (
-        toggledTask?.completed &&
-        toggledTask.recurrence !== 'none' &&
-        toggledTask.dueDate
-      ) {
-        const nextDue = getNextDueDate(toggledTask.dueDate, toggledTask.recurrence);
-        if (nextDue) {
-          const newTask = {
-            ...toggledTask,
-            id: storageService.generateId(),
-            completed: false,
-            completedAt: null,
-            createdAt: new Date().toISOString(),
-            dueDate: nextDue,
-            subtasks: toggledTask.subtasks.map((s) => ({ ...s, completed: false })),
-            order: tasks.filter((t) => t.category === toggledTask.category && !t.completed).length,
-          };
-          tasks = [...tasks, newTask];
-        }
-      }
-
-      return { ...state, tasks };
-    }
-
-    case ACTION_TYPES.REORDER_TASKS: {
-      return { ...state, tasks: action.payload };
-    }
-
-    case ACTION_TYPES.ADD_SUBTASK: {
-      const { taskId, title } = action.payload;
-      const tasks = state.tasks.map((task) => {
-        if (task.id !== taskId) return task;
-        const subtask = {
-          id: storageService.generateSubtaskId(),
-          title,
-          completed: false,
-        };
-        return { ...task, subtasks: [...task.subtasks, subtask] };
-      });
-      return { ...state, tasks };
-    }
-
-    case ACTION_TYPES.TOGGLE_SUBTASK: {
-      const { taskId, subtaskId } = action.payload;
-      const tasks = state.tasks.map((task) => {
-        if (task.id !== taskId) return task;
-        const subtasks = task.subtasks.map((s) =>
-          s.id === subtaskId ? { ...s, completed: !s.completed } : s
-        );
-        return { ...task, subtasks };
-      });
-      return { ...state, tasks };
-    }
-
-    case ACTION_TYPES.DELETE_SUBTASK: {
-      const { taskId, subtaskId } = action.payload;
-      const tasks = state.tasks.map((task) => {
-        if (task.id !== taskId) return task;
-        return { ...task, subtasks: task.subtasks.filter((s) => s.id !== subtaskId) };
-      });
-      return { ...state, tasks };
-    }
-
-    case ACTION_TYPES.ACCOMPLISH_TASK: {
-      const { taskId, date } = action.payload;
-      const tasks = state.tasks.map((task) => {
-        if (task.id !== taskId) return task;
-        return {
-          ...task,
-          completed: true,
-          completedAt: new Date().toISOString(),
-          accomplishedDate: date,
-        };
-      });
-      return { ...state, tasks };
-    }
-
-    default:
-      return state;
-  }
+function orderTasks(records) {
+  return [...records].sort((left, right) => {
+    if (left.category !== right.category) return String(left.category).localeCompare(String(right.category));
+    if ((left.order ?? 0) !== (right.order ?? 0)) return (left.order ?? 0) - (right.order ?? 0);
+    return String(left.createdAt || left.id).localeCompare(String(right.createdAt || right.id));
+  });
 }
-
-const initialState = {
-  tasks: [],
-};
 
 export function TaskProvider({ children }) {
-  const [state, dispatch] = useReducer(taskReducer, initialState);
-  const [categories, setCategories] = useState(() => storageService.getCategories());
+  const { currentUser, isVerified } = useAuth();
+  const uid = isVerified ? currentUser?.uid : null;
+  const [tasks, setTasks] = useState([]);
+  const [categories, setCategories] = useState([]);
+  const [ready, setReady] = useState(false);
+  const [syncError, setSyncError] = useState(false);
+  const tasksRef = useRef(tasks);
+  const categoriesRef = useRef(categories);
 
-  // Load tasks from localStorage on mount
+  useEffect(() => { tasksRef.current = tasks; }, [tasks]);
+  useEffect(() => { categoriesRef.current = categories; }, [categories]);
+
   useEffect(() => {
-    const tasks = storageService.getTasks();
-    dispatch({ type: ACTION_TYPES.SET_TASKS, payload: tasks });
+    setTasks([]); setCategories([]); setReady(false); setSyncError(false);
+    if (!uid) return undefined;
+    let active = true;
+    let tasksReady = false;
+    let categoriesReady = false;
+    const markReady = () => { if (active && tasksReady && categoriesReady) setReady(true); };
+    const onError = () => { if (active) setSyncError(true); };
+    const stopTasks = subscribeCollection(uid, 'tasks', (records) => {
+      if (!active) return;
+      setTasks(orderTasks(records)); tasksReady = true; markReady();
+    }, () => { tasksReady = true; onError(); markReady(); });
+    const stopCategories = subscribeDocument(uid, 'categories', 'current', (value) => {
+      if (!active) return;
+      setCategories(Array.isArray(value?.categories) && value.categories.length ? value.categories : DEFAULT_CATEGORIES);
+      categoriesReady = true; markReady();
+    }, () => { categoriesReady = true; onError(); markReady(); });
+    return () => { active = false; stopTasks(); stopCategories(); };
+  }, [uid]);
+
+  const write = useCallback(async (operation) => {
+    try { await operation(); return true; } catch { setSyncError(true); return false; }
   }, []);
-
-  // Save tasks to localStorage whenever they change
-  useEffect(() => {
-    storageService.saveTasks(state.tasks);
-  }, [state.tasks]);
-
-  // Persist categories whenever they change
-  useEffect(() => {
-    storageService.saveCategories(categories);
-  }, [categories]);
 
   const addCategory = useCallback((name) => {
     const trimmed = name.trim();
-    if (!trimmed) return false;
-    if (categories.some((c) => c.toLowerCase() === trimmed.toLowerCase())) return false;
-    setCategories((prev) => [...prev, trimmed]);
+    if (!trimmed || categoriesRef.current.some((category) => category.toLowerCase() === trimmed.toLowerCase())) return false;
+    void write(() => setDocument(uid, 'categories', 'current', { categories: [...categoriesRef.current, trimmed] }));
     return true;
-  }, [categories]);
-
+  }, [uid, write]);
   const deleteCategory = useCallback((name) => {
-    setCategories((prev) => prev.filter((c) => c !== name));
-  }, []);
-
+    void write(() => setDocument(uid, 'categories', 'current', { categories: categoriesRef.current.filter((category) => category !== name) }));
+  }, [uid, write]);
   const renameCategory = useCallback((oldName, newName) => {
     const trimmed = newName.trim();
-    if (!trimmed) return false;
-    if (categories.some((c) => c.toLowerCase() === trimmed.toLowerCase() && c !== oldName)) return false;
-    setCategories((prev) => prev.map((c) => (c === oldName ? trimmed : c)));
-    // Also update tasks that belong to the renamed category
-    const updated = state.tasks.map((t) =>
-      t.category === oldName ? { ...t, category: trimmed } : t
-    );
-    dispatch({ type: ACTION_TYPES.REORDER_TASKS, payload: updated });
+    if (!trimmed || categoriesRef.current.some((category) => category.toLowerCase() === trimmed.toLowerCase() && category !== oldName)) return false;
+    const nextCategories = categoriesRef.current.map((category) => category === oldName ? trimmed : category);
+    const updatedTasks = tasksRef.current.filter((task) => task.category === oldName).map((task) => ({ ...task, category: trimmed }));
+    void write(() => Promise.all([
+      setDocument(uid, 'categories', 'current', { categories: nextCategories }),
+      ...updatedTasks.map((task) => setRecord(uid, 'tasks', task.id, task)),
+    ]));
     return true;
-  }, [categories, state.tasks]);
+  }, [uid, write]);
 
-  const addTask = (task) => {
-    dispatch({ type: ACTION_TYPES.ADD_TASK, payload: task });
-  };
-
-  const updateTask = (task) => {
-    dispatch({ type: ACTION_TYPES.UPDATE_TASK, payload: task });
-  };
-
-  const deleteTask = (id) => {
-    dispatch({ type: ACTION_TYPES.DELETE_TASK, payload: id });
-  };
-
-  const toggleComplete = (id) => {
-    dispatch({ type: ACTION_TYPES.TOGGLE_COMPLETE, payload: id });
-  };
-
-  const reorderTasks = (tasks) => {
-    dispatch({ type: ACTION_TYPES.REORDER_TASKS, payload: tasks });
-  };
-
-  const addSubtask = (taskId, title) => {
-    dispatch({ type: ACTION_TYPES.ADD_SUBTASK, payload: { taskId, title } });
-  };
-
-  const toggleSubtask = (taskId, subtaskId) => {
-    dispatch({ type: ACTION_TYPES.TOGGLE_SUBTASK, payload: { taskId, subtaskId } });
-  };
-
-  const deleteSubtask = (taskId, subtaskId) => {
-    dispatch({ type: ACTION_TYPES.DELETE_SUBTASK, payload: { taskId, subtaskId } });
-  };
-
-  const accomplishTask = (taskId, date) => {
-    dispatch({ type: ACTION_TYPES.ACCOMPLISH_TASK, payload: { taskId, date } });
-  };
-
-  // Statistics
-  const stats = useMemo(() => {
-    const now = dayjs();
-    const startOfWeek = now.startOf('week');
-    const allTasks = state.tasks;
-    const completed = allTasks.filter((t) => t.completed);
-    const active = allTasks.filter((t) => !t.completed);
-    const completedThisWeek = completed.filter(
-      (t) => t.completedAt && dayjs(t.completedAt).isAfter(startOfWeek)
-    );
-    const overdue = active.filter(
-      (t) => t.dueDate && dayjs(t.dueDate).isBefore(now, 'day')
-    );
-
-    // Tasks by category
-    const byCategory = {};
-    allTasks.forEach((task) => {
-      byCategory[task.category] = (byCategory[task.category] || 0) + 1;
-    });
-
-    // Completion rate
-    const completionRate = allTasks.length > 0
-      ? Math.round((completed.length / allTasks.length) * 100)
-      : 0;
-
-    // Completed per day this week
-    const weekDays = [];
-    for (let i = 0; i < 7; i++) {
-      const day = startOfWeek.add(i, 'day');
-      const count = completed.filter(
-        (t) => t.completedAt && dayjs(t.completedAt).isSame(day, 'day')
-      ).length;
-      weekDays.push({ day: day.format('ddd'), count });
+  const addTask = useCallback((task) => {
+    const newTask = { ...task, id: makeId('task'), completed: false, createdAt: new Date().toISOString(), completedAt: null, subtasks: task.subtasks || [], recurrence: task.recurrence || 'none', order: tasksRef.current.filter((item) => item.category === task.category).length };
+    void write(() => setRecord(uid, 'tasks', newTask.id, newTask));
+  }, [uid, write]);
+  const updateTask = useCallback((task) => { void write(() => setRecord(uid, 'tasks', task.id, task)); }, [uid, write]);
+  const deleteTask = useCallback((id) => { void write(() => removeRecord(uid, 'tasks', id)); }, [uid, write]);
+  const toggleComplete = useCallback((id) => {
+    const task = tasksRef.current.find((item) => item.id === id);
+    if (!task) return;
+    const completed = !task.completed;
+    const updatedTask = { ...task, completed, completedAt: completed ? new Date().toISOString() : null };
+    const writes = [setRecord(uid, 'tasks', id, updatedTask)];
+    if (completed && task.recurrence !== 'none' && task.dueDate) {
+      const dueDate = getNextDueDate(task.dueDate, task.recurrence);
+      if (dueDate) {
+        const nextTask = { ...updatedTask, id: makeId('task'), completed: false, completedAt: null, createdAt: new Date().toISOString(), dueDate, subtasks: (task.subtasks || []).map((subtask) => ({ ...subtask, completed: false })), order: tasksRef.current.filter((item) => item.category === task.category && !item.completed).length };
+        writes.push(setRecord(uid, 'tasks', nextTask.id, nextTask));
+      }
     }
+    void write(() => Promise.all(writes));
+  }, [uid, write]);
+  const reorderTasks = useCallback((updatedTasks) => { void write(() => Promise.all(updatedTasks.map((task) => setRecord(uid, 'tasks', task.id, task)))); }, [uid, write]);
+  const updateSubtasks = useCallback((taskId, transform) => {
+    const task = tasksRef.current.find((item) => item.id === taskId);
+    if (!task) return;
+    void write(() => setRecord(uid, 'tasks', taskId, { ...task, subtasks: transform(task.subtasks || []) }));
+  }, [uid, write]);
+  const addSubtask = useCallback((taskId, title) => updateSubtasks(taskId, (subtasks) => [...subtasks, { id: makeId('sub'), title, completed: false }]), [updateSubtasks]);
+  const toggleSubtask = useCallback((taskId, subtaskId) => updateSubtasks(taskId, (subtasks) => subtasks.map((subtask) => subtask.id === subtaskId ? { ...subtask, completed: !subtask.completed } : subtask)), [updateSubtasks]);
+  const deleteSubtask = useCallback((taskId, subtaskId) => updateSubtasks(taskId, (subtasks) => subtasks.filter((subtask) => subtask.id !== subtaskId)), [updateSubtasks]);
+  const accomplishTask = useCallback((taskId, date) => {
+    const task = tasksRef.current.find((item) => item.id === taskId);
+    if (task) void write(() => setRecord(uid, 'tasks', taskId, { ...task, completed: true, completedAt: new Date().toISOString(), accomplishedDate: date }));
+  }, [uid, write]);
 
-    return {
-      total: allTasks.length,
-      completed: completed.length,
-      active: active.length,
-      completedThisWeek: completedThisWeek.length,
-      overdue: overdue.length,
-      completionRate,
-      byCategory,
-      weekDays,
-    };
-  }, [state.tasks]);
+  const stats = useMemo(() => {
+    const now = dayjs(); const startOfWeek = now.startOf('week');
+    const completed = tasks.filter((task) => task.completed); const active = tasks.filter((task) => !task.completed); const byCategory = {};
+    tasks.forEach((task) => { byCategory[task.category] = (byCategory[task.category] || 0) + 1; });
+    return { total: tasks.length, completed: completed.length, active: active.length, completedThisWeek: completed.filter((task) => task.completedAt && dayjs(task.completedAt).isAfter(startOfWeek)).length, overdue: active.filter((task) => task.dueDate && dayjs(task.dueDate).isBefore(now, 'day')).length, completionRate: tasks.length ? Math.round((completed.length / tasks.length) * 100) : 0, byCategory, weekDays: Array.from({ length: 7 }, (_, index) => { const day = startOfWeek.add(index, 'day'); return { day: day.format('ddd'), count: completed.filter((task) => task.completedAt && dayjs(task.completedAt).isSame(day, 'day')).length }; }) };
+  }, [tasks]);
 
-  return (
-    <TaskContext.Provider
-      value={{
-        tasks: state.tasks,
-        stats,
-        categories,
-        addTask,
-        updateTask,
-        deleteTask,
-        toggleComplete,
-        reorderTasks,
-        addSubtask,
-        toggleSubtask,
-        deleteSubtask,
-        accomplishTask,
-        addCategory,
-        deleteCategory,
-        renameCategory,
-      }}
-    >
-      {children}
-    </TaskContext.Provider>
-  );
+  const value = useMemo(() => ({ tasks, stats, categories, ready, syncError, storageError: syncError, addTask, updateTask, deleteTask, toggleComplete, reorderTasks, addSubtask, toggleSubtask, deleteSubtask, accomplishTask, addCategory, deleteCategory, renameCategory }), [tasks, stats, categories, ready, syncError, addTask, updateTask, deleteTask, toggleComplete, reorderTasks, addSubtask, toggleSubtask, deleteSubtask, accomplishTask, addCategory, deleteCategory, renameCategory]);
+  return <TaskContext.Provider value={value}>{children}</TaskContext.Provider>;
 }
 
 export function useTaskContext() {
   const context = useContext(TaskContext);
-  if (!context) {
-    throw new Error('useTaskContext must be used within a TaskProvider');
-  }
+  if (!context) throw new Error('useTaskContext must be used within a TaskProvider');
   return context;
 }
