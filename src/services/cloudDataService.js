@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, onSnapshot, setDoc, writeBatch } from 'firebase/firestore';
+import { collection, deleteDoc, doc, onSnapshot, runTransaction, setDoc, writeBatch } from 'firebase/firestore';
 import { db } from './firebase.js';
 
 const COLLECTIONS = new Set([
@@ -114,20 +114,39 @@ function importedCounts(snapshot) {
 export async function importLegacySnapshot(uid, snapshot) {
   const operations = importOperations(uid, snapshot);
   const counts = importedCounts(snapshot);
+  const migrationReference = recordReference(uid, 'meta', 'migration');
+  const sourceUsername = typeof snapshot?.username === 'string' ? snapshot.username : '';
+  const startedAt = new Date().toISOString();
+  let claimed = false;
 
-  for (let offset = 0; offset < operations.length; offset += 400) {
-    const batch = writeBatch(db);
-    operations.slice(offset, offset + 400).forEach(({ reference, value }) => batch.set(reference, value));
-    await batch.commit();
+  try {
+    await runTransaction(db, async (transaction) => {
+      const existing = await transaction.get(migrationReference);
+      const migration = existing.exists() ? existing.data() : null;
+      if (migration?.completedAt) throw new Error('Browser records have already been imported.');
+      if (migration?.status === 'importing') throw new Error('A browser-record import is already in progress.');
+      transaction.set(migrationReference, { sourceUsername, startedAt, status: 'importing' });
+    });
+    claimed = true;
+
+    for (let offset = 0; offset < operations.length; offset += 400) {
+      const batch = writeBatch(db);
+      operations.slice(offset, offset + 400).forEach(({ reference, value }) => batch.set(reference, value));
+      await batch.commit();
+    }
+
+    const importedAt = new Date().toISOString();
+    const migration = { sourceUsername, counts, importedAt, completedAt: importedAt, status: 'completed' };
+    await setDoc(migrationReference, migration);
+    return migration;
+  } catch (error) {
+    if (claimed) {
+      try {
+        await deleteDoc(migrationReference);
+      } catch {
+        // A later retry is still safe because imported records have deterministic IDs.
+      }
+    }
+    throw error;
   }
-
-  const importedAt = new Date().toISOString();
-  const migration = {
-    sourceUsername: typeof snapshot?.username === 'string' ? snapshot.username : '',
-    counts,
-    importedAt,
-    completedAt: importedAt,
-  };
-  await setDocument(uid, 'meta', 'migration', migration);
-  return migration;
 }

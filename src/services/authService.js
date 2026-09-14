@@ -83,6 +83,7 @@ export async function refreshUser(user) {
   if (!user) return failure('Sign in before refreshing your account.');
   try {
     await reload(user);
+    await user.getIdToken(true);
     return { success: true };
   } catch (error) {
     return failure(mapAuthError(error));

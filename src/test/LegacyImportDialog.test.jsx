@@ -29,7 +29,7 @@ describe('LegacyImportDialog', () => {
     render(<LegacyImportDialog open onClose={vi.fn()} />);
 
     expect(screen.getByRole('button', { name: 'Import' })).toBeDisabled();
-    expect(screen.getByText(/Local browser data will remain unchanged/i)).toBeInTheDocument();
+    expect(screen.getByText(/Local browser data will remain unchanged.*replaced by this import/i)).toBeInTheDocument();
     expect(screen.getByText(/already been completed/i)).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   });

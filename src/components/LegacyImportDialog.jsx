@@ -86,7 +86,7 @@ export default function LegacyImportDialog({ open, onClose }) {
           <Typography key={section} variant="body2">{SECTION_LABELS[section]}: {count}</Typography>
         ))}
         <Alert severity="warning" sx={{ mt: 2 }}>
-          Local browser data will remain unchanged after import.
+          Local browser data will remain unchanged. Matching cloud record IDs, categories, and settings will be replaced by this import.
         </Alert>
         {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
       </DialogContent>

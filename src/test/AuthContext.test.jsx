@@ -37,6 +37,7 @@ const unverifiedUser = {
   email: 'ari@example.com',
   displayName: 'Ari',
   emailVerified: false,
+  getIdToken: vi.fn(),
 };
 
 const verifiedUser = {
@@ -44,6 +45,7 @@ const verifiedUser = {
   email: 'ari@example.com',
   displayName: 'Ari',
   emailVerified: true,
+  getIdToken: vi.fn(),
 };
 
 let authStateUser;
@@ -60,6 +62,8 @@ describe('AuthContext', () => {
     firebaseMocks.sendEmailVerification.mockResolvedValue();
     firebaseMocks.reauthenticateWithCredential.mockResolvedValue();
     firebaseMocks.updatePassword.mockResolvedValue();
+    unverifiedUser.getIdToken.mockResolvedValue('fresh-token');
+    verifiedUser.getIdToken.mockResolvedValue('fresh-token');
   });
 
   it('sends verification after sign-up and keeps an authenticated unverified user blocked', async () => {
@@ -93,6 +97,19 @@ describe('AuthContext', () => {
     });
 
     expect(resetResult).toEqual({ success: true });
+  });
+
+  it('refreshes the ID token after reloading verification state', async () => {
+    authStateUser = unverifiedUser;
+    const { result } = renderHook(() => useAuth(), { wrapper: AuthProvider });
+    await waitFor(() => expect(result.current.currentUser).toBe(unverifiedUser));
+
+    await act(async () => {
+      await result.current.refreshUser();
+    });
+
+    expect(firebaseMocks.reload).toHaveBeenCalledWith(unverifiedUser);
+    expect(unverifiedUser.getIdToken).toHaveBeenCalledWith(true);
   });
 
   it('reauthenticates before updating a password', async () => {

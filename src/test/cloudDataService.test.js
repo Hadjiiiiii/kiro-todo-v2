@@ -6,6 +6,7 @@ const firestore = vi.hoisted(() => ({
   deleteDoc: vi.fn(),
   doc: vi.fn((parent, id) => ({ path: `${parent.path}/${id}` })),
   onSnapshot: vi.fn(),
+  runTransaction: vi.fn(),
   setDoc: vi.fn(),
   writeBatch: vi.fn(),
 }));
@@ -17,6 +18,10 @@ vi.mock('firebase/firestore', () => firestore);
 describe('cloudDataService', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    firestore.runTransaction.mockImplementation(async (_db, callback) => callback({
+      get: vi.fn().mockResolvedValue({ exists: () => false, data: () => null }),
+      set: vi.fn(),
+    }));
   });
 
   it('writes a task only below the active user path', async () => {
@@ -78,5 +83,19 @@ describe('cloudDataService', () => {
     })).rejects.toThrow('offline');
 
     expect(firestore.setDoc).not.toHaveBeenCalled();
+    expect(firestore.deleteDoc).toHaveBeenCalledWith({ path: 'users/new-user/meta/migration' });
+  });
+
+  it('does not overwrite cloud records when another import owns the migration lock', async () => {
+    firestore.runTransaction.mockImplementation(async (_db, callback) => callback({
+      get: vi.fn().mockResolvedValue({ exists: () => true, data: () => ({ status: 'importing' }) }),
+      set: vi.fn(),
+    }));
+
+    await expect(cloudDataService.importLegacySnapshot('new-user', {
+      tasks: [{ id: 'task-1', title: 'Keep me' }],
+    })).rejects.toThrow('already in progress');
+
+    expect(firestore.writeBatch).not.toHaveBeenCalled();
   });
 });
