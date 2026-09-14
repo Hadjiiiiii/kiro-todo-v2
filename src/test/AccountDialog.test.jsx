@@ -43,15 +43,12 @@ describe('AccountDialog', () => {
     settings.migration = null;
   });
 
-  it('shows unverified status and confirms a resent verification email', async () => {
-    const user = userEvent.setup();
+  it('shows verified account status without destructive controls', () => {
+    auth.isVerified = true;
     render(<AccountDialog open onClose={vi.fn()} />);
 
-    expect(screen.getByText('Verification required')).toBeVisible();
-    await user.click(screen.getByRole('button', { name: 'Resend verification' }));
-
-    expect(auth.resendVerification).toHaveBeenCalledOnce();
-    expect(await screen.findByText('Verification email sent.')).toBeVisible();
+    expect(screen.getByText('Verified')).toBeVisible();
+    expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
   });
 
   it('requires a current password and matching confirmation before updating', async () => {
@@ -86,5 +83,19 @@ describe('AccountDialog', () => {
     expect(await screen.findByText('Password updated.')).toBeVisible();
     expect(screen.getByLabelText('Current password')).toHaveValue('');
     expect(screen.queryByRole('button', { name: /delete/i })).not.toBeInTheDocument();
+  });
+
+  it('clears prior success before showing a local validation error', async () => {
+    const user = userEvent.setup();
+    render(<AccountDialog open onClose={vi.fn()} />);
+
+    await user.click(screen.getByRole('button', { name: 'Save profile' }));
+    expect(await screen.findByText('Profile saved.')).toBeVisible();
+
+    await user.clear(screen.getByLabelText('Display name'));
+    await user.click(screen.getByRole('button', { name: 'Save profile' }));
+
+    expect(screen.getByText('Display name is required.')).toBeVisible();
+    expect(screen.queryByText('Profile saved.')).not.toBeInTheDocument();
   });
 });

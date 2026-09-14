@@ -23,7 +23,6 @@ export default function AccountDialog({ open, onClose }) {
     currentUser,
     isVerified,
     changePassword,
-    resendVerification,
     signOut,
     updateDisplayName,
   } = useAuth();
@@ -66,6 +65,8 @@ export default function AccountDialog({ open, onClose }) {
   };
 
   const handleSaveProfile = async () => {
+    setSuccess('');
+    setError('');
     const name = displayName.trim();
     if (!name) {
       setError('Display name is required.');
@@ -79,6 +80,8 @@ export default function AccountDialog({ open, onClose }) {
   };
 
   const handlePasswordUpdate = async () => {
+    setSuccess('');
+    setError('');
     if (!currentPassword) {
       setError('Current password is required.');
       return;
@@ -98,12 +101,6 @@ export default function AccountDialog({ open, onClose }) {
       setConfirmPassword('');
     }
   };
-
-  const handleResendVerification = () => runAction(
-    'verification',
-    resendVerification,
-    'Verification email sent.',
-  );
 
   const handleSignOut = async () => {
     const result = await runAction('signout', signOut, 'Signed out.');
@@ -145,11 +142,6 @@ export default function AccountDialog({ open, onClose }) {
                 <Typography variant="body2" sx={{ color: isVerified ? THEME.green : THEME.textSecondary }}>
                   {isVerified ? 'Verified' : 'Verification required'}
                 </Typography>
-                {!isVerified && (
-                  <Button variant="outlined" onClick={handleResendVerification} disabled={disabled} sx={controlSx}>
-                    {busyAction === 'verification' ? 'Sending verification…' : 'Resend verification'}
-                  </Button>
-                )}
               </Box>
             </Box>
 
