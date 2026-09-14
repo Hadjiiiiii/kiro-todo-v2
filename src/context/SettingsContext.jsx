@@ -23,19 +23,26 @@ export function SettingsProvider({ children }) {
 
     if (!uid) return undefined;
 
-    return subscribeDocument(
+    let active = true;
+    const unsubscribe = subscribeDocument(
       uid,
       'settings',
       'preferences',
       (value) => {
+        if (!active) return;
         setSettings(value || {});
         setReady(true);
       },
       () => {
+        if (!active) return;
         setSyncError(true);
         setReady(true);
       },
     );
+    return () => {
+      active = false;
+      unsubscribe();
+    };
   }, [uid]);
 
   const completeOnboarding = useCallback(async () => {

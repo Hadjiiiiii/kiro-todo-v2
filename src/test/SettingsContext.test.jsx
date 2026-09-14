@@ -48,4 +48,30 @@ describe('SettingsContext', () => {
       migration: { completedAt: '2026-09-01' },
     });
   });
+
+  it('ignores a settings callback from a previous user', async () => {
+    const callbacks = [];
+    cloud.subscribeDocument.mockImplementation((_uid, _collection, _id, onValue) => {
+      callbacks.push(onValue);
+      return vi.fn();
+    });
+
+    const { result, rerender } = renderHook(() => useSettingsContext(), { wrapper: SettingsProvider });
+    await act(async () => {
+      callbacks[0]({ onboardingCompleted: false });
+    });
+    await waitFor(() => expect(result.current.ready).toBe(true));
+
+    auth.currentUser = { uid: 'bob' };
+    rerender();
+    await act(async () => {
+      callbacks[1]({ onboardingCompleted: true });
+    });
+    await waitFor(() => expect(result.current.settings).toEqual({ onboardingCompleted: true }));
+
+    await act(async () => {
+      callbacks[0]({ onboardingCompleted: false });
+    });
+    expect(result.current.settings).toEqual({ onboardingCompleted: true });
+  });
 });

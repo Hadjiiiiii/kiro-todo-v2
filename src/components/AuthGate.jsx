@@ -4,6 +4,7 @@ import { TaskProvider } from '../context/TaskContext.jsx';
 import { HabitProvider } from '../context/HabitContext.jsx';
 import { JournalProvider } from '../context/JournalContext.jsx';
 import { FinanceProvider } from '../context/FinanceContext.jsx';
+import { SettingsProvider } from '../context/SettingsContext.jsx';
 import LoginScreen from './LoginScreen.jsx';
 import VerifyEmailScreen from './VerifyEmailScreen.jsx';
 
@@ -23,14 +24,16 @@ export default function AuthGate() {
   }
 
   return (
-    <TaskProvider>
-      <HabitProvider>
-        <JournalProvider>
-          <FinanceProvider>
-            <App />
-          </FinanceProvider>
-        </JournalProvider>
-      </HabitProvider>
-    </TaskProvider>
+    <SettingsProvider>
+      <TaskProvider>
+        <HabitProvider>
+          <JournalProvider>
+            <FinanceProvider>
+              <App />
+            </FinanceProvider>
+          </JournalProvider>
+        </HabitProvider>
+      </TaskProvider>
+    </SettingsProvider>
   );
 }
