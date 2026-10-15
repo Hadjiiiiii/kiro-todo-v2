@@ -1,9 +1,58 @@
 import { DEFAULT_CATEGORIES } from '../constants';
 
 let _userPrefix = '';
+const unreadable = new Set();
 
 function key(base) {
   return _userPrefix ? `${_userPrefix}:${base}` : base;
+}
+
+function isPlainObject(value) {
+  return value !== null && typeof value === 'object' && !Array.isArray(value);
+}
+
+/**
+ * Missing keys hydrate as empty. Present-but-invalid payloads stay on disk
+ * and block later writes so a save effect cannot replace them with [].
+ */
+function readRecord(base, { empty, isValid, map }) {
+  let raw;
+  try {
+    raw = localStorage.getItem(key(base));
+  } catch {
+    return empty;
+  }
+
+  if (raw === null) {
+    unreadable.delete(base);
+    return empty;
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!isValid(parsed)) {
+      unreadable.add(base);
+      return empty;
+    }
+    unreadable.delete(base);
+    return map ? map(parsed) : parsed;
+  } catch {
+    unreadable.add(base);
+    return empty;
+  }
+}
+
+function writeRecord(base, value) {
+  if (unreadable.has(base)) {
+    return false;
+  }
+  try {
+    localStorage.setItem(key(base), JSON.stringify(value));
+    return true;
+  } catch (error) {
+    console.error(`Failed to save ${base}:`, error);
+    return false;
+  }
 }
 
 export const storageService = {
@@ -12,150 +61,114 @@ export const storageService = {
    * Call this when user logs in/out.
    */
   setUser(username) {
-    _userPrefix = username || '';
+    const next = username || '';
+    if (next === _userPrefix) return;
+    _userPrefix = next;
+    unreadable.clear();
   },
 
-  getUser() {
-    return _userPrefix;
+  hasUnreadableRecords() {
+    return unreadable.size > 0;
+  },
+
+  /**
+   * Remove only the keys that failed to parse, then allow writes again.
+   * Callers should reload so providers hydrate from the cleared keys.
+   */
+  discardUnreadableRecords() {
+    unreadable.forEach((base) => {
+      try {
+        localStorage.removeItem(key(base));
+      } catch {
+        // Keep going; reload still re-reads whatever remains.
+      }
+    });
+    unreadable.clear();
   },
 
   getTasks() {
-    try {
-      const data = localStorage.getItem(key('tasks'));
-      if (!data) return [];
-      const tasks = JSON.parse(data);
-      if (!Array.isArray(tasks)) return [];
-      return tasks.map((task) => ({
-        subtasks: [],
-        recurrence: 'none',
-        completedAt: null,
-        ...task,
-      }));
-    } catch {
-      return [];
-    }
+    return readRecord('tasks', {
+      empty: [],
+      isValid: Array.isArray,
+      map: (tasks) =>
+        tasks.map((task) => ({
+          subtasks: [],
+          recurrence: 'none',
+          completedAt: null,
+          ...task,
+        })),
+    });
   },
 
   saveTasks(tasks) {
-    try {
-      localStorage.setItem(key('tasks'), JSON.stringify(tasks));
-    } catch (error) {
-      console.error('Failed to save tasks:', error);
-    }
+    return writeRecord('tasks', tasks);
   },
 
   getSettings() {
-    try {
-      const data = localStorage.getItem(key('settings'));
-      if (!data) return {};
-      return JSON.parse(data);
-    } catch {
-      return {};
-    }
+    return readRecord('settings', {
+      empty: {},
+      isValid: isPlainObject,
+    });
   },
 
   saveSettings(settings) {
-    try {
-      localStorage.setItem(key('settings'), JSON.stringify(settings));
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-    }
+    return writeRecord('settings', settings);
   },
 
   getCategories() {
-    try {
-      const data = localStorage.getItem(key('categories'));
-      if (!data) return DEFAULT_CATEGORIES;
-      const categories = JSON.parse(data);
-      if (!Array.isArray(categories) || categories.length === 0) return DEFAULT_CATEGORIES;
-      return categories;
-    } catch {
-      return DEFAULT_CATEGORIES;
-    }
+    return readRecord('categories', {
+      empty: DEFAULT_CATEGORIES,
+      isValid: Array.isArray,
+      map: (categories) => (categories.length > 0 ? categories : DEFAULT_CATEGORIES),
+    });
   },
 
   saveCategories(categories) {
-    try {
-      localStorage.setItem(key('categories'), JSON.stringify(categories));
-    } catch (error) {
-      console.error('Failed to save categories:', error);
-    }
+    return writeRecord('categories', categories);
   },
 
   getHabits() {
-    try {
-      const data = localStorage.getItem(key('habits'));
-      if (!data) return [];
-      const habits = JSON.parse(data);
-      return Array.isArray(habits) ? habits : [];
-    } catch {
-      return [];
-    }
+    return readRecord('habits', {
+      empty: [],
+      isValid: Array.isArray,
+    });
   },
 
   saveHabits(habits) {
-    try {
-      localStorage.setItem(key('habits'), JSON.stringify(habits));
-    } catch (error) {
-      console.error('Failed to save habits:', error);
-    }
+    return writeRecord('habits', habits);
   },
 
   getHabitCompletions() {
-    try {
-      const data = localStorage.getItem(key('habit-completions'));
-      if (!data) return [];
-      const completions = JSON.parse(data);
-      return Array.isArray(completions) ? completions : [];
-    } catch {
-      return [];
-    }
+    return readRecord('habit-completions', {
+      empty: [],
+      isValid: Array.isArray,
+    });
   },
 
   saveHabitCompletions(completions) {
-    try {
-      localStorage.setItem(key('habit-completions'), JSON.stringify(completions));
-    } catch (error) {
-      console.error('Failed to save habit completions:', error);
-    }
+    return writeRecord('habit-completions', completions);
   },
 
   getJournal() {
-    try {
-      const data = localStorage.getItem(key('journal'));
-      if (!data) return {};
-      const entries = JSON.parse(data);
-      return typeof entries === 'object' && entries !== null ? entries : {};
-    } catch {
-      return {};
-    }
+    return readRecord('journal', {
+      empty: {},
+      isValid: isPlainObject,
+    });
   },
 
   saveJournal(entries) {
-    try {
-      localStorage.setItem(key('journal'), JSON.stringify(entries));
-    } catch (error) {
-      console.error('Failed to save journal:', error);
-    }
+    return writeRecord('journal', entries);
   },
 
   getFinance() {
-    try {
-      const data = localStorage.getItem(key('finance'));
-      if (!data) return [];
-      const transactions = JSON.parse(data);
-      return Array.isArray(transactions) ? transactions : [];
-    } catch {
-      return [];
-    }
+    return readRecord('finance', {
+      empty: [],
+      isValid: Array.isArray,
+    });
   },
 
   saveFinance(transactions) {
-    try {
-      localStorage.setItem(key('finance'), JSON.stringify(transactions));
-    } catch (error) {
-      console.error('Failed to save finance:', error);
-    }
+    return writeRecord('finance', transactions);
   },
 
   generateId() {

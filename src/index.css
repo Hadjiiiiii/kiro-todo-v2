@@ -8,10 +8,22 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   background: #141413;
   min-height: 100vh;
+  min-height: 100dvh;
   color: #faf9f5;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  caret-color: #d97757;
+}
+
+::selection {
+  background: rgba(217, 119, 87, 0.32);
+  color: #faf9f5;
+}
+
+:focus-visible {
+  outline: 2px solid #d97757;
+  outline-offset: 2px;
 }
 
 /* Subtle warm vignette (replaces the old purple gradient glow) */
@@ -31,6 +43,7 @@ body::before {
 
 #root {
   min-height: 100vh;
+  min-height: 100dvh;
   position: relative;
   z-index: 1;
 }
@@ -83,33 +96,115 @@ body::before {
   transition: none !important;
 }
 
-/* Mobile touch improvements */
-@media (max-width: 767px) {
-  /* Remove tap highlight on mobile */
-  * {
-    -webkit-tap-highlight-color: transparent;
+/* Hover Reveal: the active card stays sharp; siblings recede */
+.card-reveal,
+.board-category {
+  transition-property: background-color, border-color, box-shadow, transform, filter;
+  transition-duration: 0.28s;
+  transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card-hover-reveal:has(.card-reveal:is(:hover, :focus-visible, :has(:focus-visible))) .card-reveal:not(:hover):not(:focus-visible):not(:has(:focus-visible)),
+.category-hover-reveal:has(.board-category:is(:hover, :focus-visible, :has(:focus-visible))) > .board-category:not(:hover):not(:focus-visible):not(:has(:focus-visible)) {
+  filter: brightness(0.88);
+}
+
+.card-hover-reveal .card-reveal:is(:hover, :focus-visible, :has(:focus-visible)),
+.category-hover-reveal > .board-category:is(:hover, :focus-visible, :has(:focus-visible)) {
+  z-index: 2;
+}
+
+.card-hover-reveal .card-reveal:is(:hover, :focus-visible, :has(:focus-visible)):not(article),
+.category-hover-reveal > .board-category:is(:hover, :focus-visible, :has(:focus-visible)) {
+  transform: scale(1.04);
+}
+
+.card-hover-reveal:has([data-dragging="true"]) .card-reveal,
+.category-hover-reveal:has([data-dragging="true"]) > .board-category {
+  filter: none !important;
+}
+
+@media (pointer: coarse) {
+  .card-hover-reveal:has(.card-reveal:is(:hover, :focus-visible, :has(:focus-visible))) .card-reveal:not(:hover):not(:focus-visible):not(:has(:focus-visible)),
+  .category-hover-reveal:has(.board-category:is(:hover, :focus-visible, :has(:focus-visible))) > .board-category:not(:hover):not(:focus-visible):not(:has(:focus-visible)) {
+    filter: none;
   }
 
-  /* Contain overscroll to prevent page bounce */
+  .card-hover-reveal .card-reveal:is(:hover):not(article),
+  .category-hover-reveal > .board-category:is(:hover) {
+    transform: none;
+  }
+}
+
+/* Mobile layout: contain bounce, hide decorative scrollbars */
+@media (max-width: 767px) {
   .MuiBox-root {
     overscroll-behavior: contain;
   }
 
-  /* Hide scrollbars on mobile for cleaner look */
   ::-webkit-scrollbar {
     width: 0;
     height: 0;
   }
 
-  /* Ensure tap targets are large enough */
-  button, [role="button"], .MuiIconButton-root, .MuiListItemButton-root {
+  .MuiInputBase-input {
+    font-size: 16px !important;
+  }
+
+  .MuiBottomNavigation-root {
+    user-select: none;
+    -webkit-user-select: none;
+  }
+}
+
+/* Touch and coarse pointers: 44px controls, no hover-only affordance */
+@media (max-width: 767px), (pointer: coarse) {
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .MuiButton-root,
+  .MuiIconButton-root,
+  .MuiListItemButton-root,
+  .MuiBottomNavigationAction-root,
+  .MuiFab-root {
     min-height: 44px;
     min-width: 44px;
   }
 
-  /* Prevent text selection during touch interactions */
-  .MuiBottomNavigation-root {
-    user-select: none;
-    -webkit-user-select: none;
+  .MuiCheckbox-root {
+    min-height: 44px;
+    min-width: 44px;
+    padding: 10px;
+  }
+
+  button.calendar-day {
+    min-width: 0;
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0s !important;
+    scroll-behavior: auto !important;
+  }
+
+  .card-hover-reveal:has(.card-reveal:is(:hover, :focus-visible, :has(:focus-visible))) .card-reveal:not(:hover):not(:focus-visible):not(:has(:focus-visible)),
+  .category-hover-reveal:has(.board-category:is(:hover, :focus-visible, :has(:focus-visible))) > .board-category:not(:hover):not(:focus-visible):not(:has(:focus-visible)) {
+    filter: none;
+  }
+
+  .card-hover-reveal .card-reveal:is(:hover, :focus-visible, :has(:focus-visible)):not(article),
+  .category-hover-reveal > .board-category:is(:hover, :focus-visible, :has(:focus-visible)) {
+    transform: none;
   }
 }

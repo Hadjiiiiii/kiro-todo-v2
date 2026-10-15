@@ -21,6 +21,8 @@ import {
   Divider,
   useMediaQuery,
 } from '@mui/material';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddIcon from '@mui/icons-material/Add';
@@ -38,9 +40,10 @@ const defaultFormData = {
   recurrence: 'none',
 };
 
-export default function TaskDialog({ open, onClose, editTask, onDelete }) {
-  const { addTask, updateTask, addSubtask, toggleSubtask, deleteSubtask, categories, addCategory } = useTaskContext();
+export default function TaskDialog({ open, onClose, editTask, initialDueDate, onDelete }) {
+  const { addTask, updateTask, addSubtask, toggleSubtask, deleteSubtask, categories, addCategory, tasks } = useTaskContext();
   const isMobile = useMediaQuery('(max-width:767px)');
+  const liveTask = editTask ? tasks.find((task) => task.id === editTask.id) ?? editTask : null;
   const [formData, setFormData] = useState(defaultFormData);
   const [errors, setErrors] = useState({});
   const [deleteConfirm, setDeleteConfirm] = useState(false);
@@ -49,6 +52,7 @@ export default function TaskDialog({ open, onClose, editTask, onDelete }) {
   const [newCategoryName, setNewCategoryName] = useState('');
 
   useEffect(() => {
+    if (!open) return;
     if (editTask) {
       setFormData({
         title: editTask.title || '',
@@ -59,12 +63,18 @@ export default function TaskDialog({ open, onClose, editTask, onDelete }) {
         recurrence: editTask.recurrence || 'none',
       });
     } else {
-      setFormData({ ...defaultFormData, category: categories[0] || '' });
+      setFormData({
+        ...defaultFormData,
+        category: categories[0] || '',
+        dueDate: initialDueDate || null,
+      });
     }
     setErrors({});
     setDeleteConfirm(false);
     setNewSubtask('');
-  }, [editTask, open, categories]);
+    setAddingCategory(false);
+    setNewCategoryName('');
+  }, [editTask?.id, initialDueDate, open]);
 
   const handleChange = (field) => (event) => {
     setFormData((prev) => ({ ...prev, [field]: event.target.value }));
@@ -81,6 +91,8 @@ export default function TaskDialog({ open, onClose, editTask, onDelete }) {
     const newErrors = {};
     if (!formData.title.trim()) {
       newErrors.title = 'Title is required';
+    } else if (formData.title.trim().length > 200) {
+      newErrors.title = 'Title must be 200 characters or fewer';
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -130,31 +142,40 @@ export default function TaskDialog({ open, onClose, editTask, onDelete }) {
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth fullScreen={isMobile}>
-      <DialogTitle sx={{ pb: 1 }}>
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Dialog
+        open={open}
+        onClose={onClose}
+        maxWidth="sm"
+        fullWidth
+        fullScreen={isMobile}
+        aria-labelledby="task-dialog-title"
+      >
+      <DialogTitle id="task-dialog-title" sx={{ pb: 1 }}>
         <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Typography variant="h5" sx={{ fontWeight: 600, color: THEME.text, fontSize: '1.4rem' }}>
-            {editTask ? 'Edit Task' : 'New Task'}
+          <Typography component="span" variant="h5" sx={{ fontWeight: 600, color: THEME.text, fontSize: '1.4rem' }}>
+            {editTask ? 'Edit task' : 'Add task'}
           </Typography>
           <Box sx={{ display: 'flex', gap: 0.5 }}>
             {editTask && (
               <IconButton
                 color={deleteConfirm ? 'error' : 'default'}
                 onClick={handleDelete}
-                title={deleteConfirm ? 'Click again to confirm delete' : 'Delete task'}
+                title={deleteConfirm ? 'Delete task permanently' : 'Delete task'}
+                aria-label={deleteConfirm ? 'Confirm permanent task deletion' : 'Delete task'}
                 size="small"
               >
                 <DeleteIcon fontSize="small" />
               </IconButton>
             )}
-            <IconButton onClick={onClose} size="small" sx={{ color: THEME.textSecondary }}>
+            <IconButton onClick={onClose} size="small" aria-label="Close" sx={{ color: THEME.textSecondary }}>
               <CloseIcon fontSize="small" />
             </IconButton>
           </Box>
         </Box>
         {deleteConfirm && (
           <Typography variant="caption" color="error">
-            Click delete again to confirm
+            Delete “{editTask?.title}” permanently? Select delete again.
           </Typography>
         )}
       </DialogTitle>
@@ -169,6 +190,7 @@ export default function TaskDialog({ open, onClose, editTask, onDelete }) {
             fullWidth
             autoFocus
             required
+            slotProps={{ htmlInput: { maxLength: 200 } }}
           />
           <TextField
             label="Notes"
@@ -177,6 +199,7 @@ export default function TaskDialog({ open, onClose, editTask, onDelete }) {
             fullWidth
             multiline
             rows={3}
+            slotProps={{ htmlInput: { maxLength: 2000 } }}
           />
           <Box sx={{ display: 'flex', gap: 2 }}>
             <FormControl fullWidth>
@@ -185,15 +208,22 @@ export default function TaskDialog({ open, onClose, editTask, onDelete }) {
                 <TextField
                   placeholder="New category name..."
                   value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onChange={(e) => {
+                    setNewCategoryName(e.target.value);
+                    if (errors.category) setErrors((prev) => ({ ...prev, category: null }));
+                  }}
+                  error={!!errors.category}
+                  helperText={errors.category}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter' && newCategoryName.trim()) {
                       const success = addCategory(newCategoryName.trim());
                       if (success) {
                         setFormData((prev) => ({ ...prev, category: newCategoryName.trim() }));
+                        setNewCategoryName('');
+                        setAddingCategory(false);
+                      } else {
+                        setErrors((prev) => ({ ...prev, category: 'Use a unique category name.' }));
                       }
-                      setNewCategoryName('');
-                      setAddingCategory(false);
                     }
                     if (e.key === 'Escape') {
                       setNewCategoryName('');
@@ -202,6 +232,7 @@ export default function TaskDialog({ open, onClose, editTask, onDelete }) {
                   }}
                   autoFocus
                   size="small"
+                  slotProps={{ htmlInput: { maxLength: 60 } }}
                   sx={{ mt: '6px' }}
                 />
               ) : (
@@ -222,7 +253,7 @@ export default function TaskDialog({ open, onClose, editTask, onDelete }) {
                     </MenuItem>
                   ))}
                   <MenuItem value="__ADD_NEW__" sx={{ color: THEME.accent, fontStyle: 'italic', fontSize: '0.85rem' }}>
-                    + Add new...
+                    Add category…
                   </MenuItem>
                 </Select>
               )}
@@ -244,7 +275,7 @@ export default function TaskDialog({ open, onClose, editTask, onDelete }) {
           </Box>
           <Box sx={{ display: 'flex', gap: 2 }}>
             <DatePicker
-              label="Due Date"
+              label="Due date"
               value={formData.dueDate}
               onChange={handleDateChange}
               slotProps={{
@@ -274,12 +305,12 @@ export default function TaskDialog({ open, onClose, editTask, onDelete }) {
               <Divider sx={{ borderColor: THEME.border, mt: 1 }} />
               <Box>
                 <Typography variant="subtitle2" sx={{ color: THEME.textSecondary, mb: 1 }}>
-                  Subtasks ({editTask.subtasks?.filter((s) => s.completed).length || 0}/{editTask.subtasks?.length || 0})
+                  Subtasks ({liveTask.subtasks?.filter((s) => s.completed).length || 0}/{liveTask.subtasks?.length || 0})
                 </Typography>
 
-                {editTask.subtasks && editTask.subtasks.length > 0 && (
+                {liveTask.subtasks && liveTask.subtasks.length > 0 && (
                   <List dense sx={{ py: 0, mb: 1 }}>
-                    {editTask.subtasks.map((subtask) => (
+                    {liveTask.subtasks.map((subtask) => (
                       <ListItem
                         key={subtask.id}
                         sx={{
@@ -291,6 +322,7 @@ export default function TaskDialog({ open, onClose, editTask, onDelete }) {
                           <IconButton
                             size="small"
                             onClick={() => deleteSubtask(editTask.id, subtask.id)}
+                            aria-label={`Delete subtask ${subtask.title}`}
                             sx={{ color: THEME.textMuted }}
                           >
                             <CloseIcon sx={{ fontSize: '0.85rem' }} />
@@ -307,12 +339,14 @@ export default function TaskDialog({ open, onClose, editTask, onDelete }) {
                         </ListItemIcon>
                         <ListItemText
                           primary={subtask.title}
-                          primaryTypographyProps={{
-                            variant: 'body2',
-                            sx: {
-                              textDecoration: subtask.completed ? 'line-through' : 'none',
-                              color: subtask.completed ? THEME.textMuted : THEME.text,
-                              fontSize: '0.85rem',
+                          slotProps={{
+                            primary: {
+                              variant: 'body2',
+                              sx: {
+                                textDecoration: subtask.completed ? 'line-through' : 'none',
+                                color: subtask.completed ? THEME.textMuted : THEME.text,
+                                fontSize: '0.85rem',
+                              },
                             },
                           }}
                         />
@@ -327,6 +361,7 @@ export default function TaskDialog({ open, onClose, editTask, onDelete }) {
                     value={newSubtask}
                     onChange={(e) => setNewSubtask(e.target.value)}
                     onKeyDown={handleSubtaskKeyDown}
+                    slotProps={{ htmlInput: { maxLength: 200 } }}
                     size="small"
                     fullWidth
                     sx={{
@@ -338,6 +373,7 @@ export default function TaskDialog({ open, onClose, editTask, onDelete }) {
                   <IconButton
                     onClick={handleAddSubtask}
                     disabled={!newSubtask.trim()}
+                    aria-label="Add subtask"
                     size="small"
                     sx={{
                       backgroundColor: THEME.accentSoft,
@@ -363,9 +399,10 @@ export default function TaskDialog({ open, onClose, editTask, onDelete }) {
           Cancel
         </Button>
         <Button onClick={handleSubmit} variant="contained">
-          {editTask ? 'Update' : 'Create'}
+          {editTask ? 'Save changes' : 'Add task'}
         </Button>
       </DialogActions>
-    </Dialog>
+      </Dialog>
+    </LocalizationProvider>
   );
 }

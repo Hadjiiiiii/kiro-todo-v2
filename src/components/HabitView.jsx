@@ -11,13 +11,17 @@ import {
   ToggleButtonGroup,
   LinearProgress,
   Tooltip,
+  ButtonBase,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import AddIcon from '@mui/icons-material/Add';
 import DeleteIcon from '@mui/icons-material/Delete';
 import CheckIcon from '@mui/icons-material/Check';
 import dayjs from 'dayjs';
-import { THEME } from '../constants';
+import { THEME, CARD_HOVER_ZOOM } from '../constants';
 import { useHabitContext, SCHEDULE_PRESETS } from '../context/HabitContext';
+import ConfirmDialog from './ConfirmDialog';
 
 const DAY_LABELS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
 const DAY_FULL = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -36,7 +40,14 @@ function WeekRow({ habit, weekStart }) {
   const today = dayjs();
 
   return (
-    <Box sx={{ display: 'flex', gap: 0.5 }}>
+    <Box
+      sx={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
+        gap: 0.5,
+        width: '100%',
+      }}
+    >
       {Array.from({ length: 7 }).map((_, i) => {
         const date = weekStart.add(i, 'day');
         const dateStr = date.format('YYYY-MM-DD');
@@ -47,13 +58,20 @@ function WeekRow({ habit, weekStart }) {
 
         return (
           <Tooltip key={i} title={date.format('ddd MMM D')}>
-            <Box
+            <Box component="span" sx={{ display: 'flex', minWidth: 0 }}>
+            <ButtonBase
               onClick={() => {
                 if (isScheduled && isPast) toggleHabitDay(habit.id, dateStr);
               }}
+              disabled={!isScheduled || isFuture}
+              className="habit-day"
+              aria-label={`${isDone ? 'Mark incomplete' : 'Mark complete'}: ${habit.name} on ${date.format('dddd, MMMM D')}`}
+              aria-pressed={isDone}
               sx={{
-                width: 32,
-                height: 32,
+                width: '100%',
+                minWidth: 0,
+                minHeight: 44,
+                height: 44,
                 borderRadius: 1.5,
                 display: 'flex',
                 alignItems: 'center',
@@ -68,18 +86,26 @@ function WeekRow({ habit, weekStart }) {
                   ? `1px solid ${isDone ? THEME.accent : THEME.border}`
                   : '1px solid transparent',
                 opacity: isFuture ? 0.4 : 1,
-                transition: 'all 0.15s ease',
                 '&:hover': isScheduled && isPast
                   ? { borderColor: THEME.accent, backgroundColor: isDone ? THEME.accentHover : THEME.accentSoft }
                   : {},
               }}
             >
-              {isDone && <CheckIcon sx={{ fontSize: '0.85rem', color: '#fff' }} />}
-              {!isDone && isScheduled && (
-                <Typography variant="caption" sx={{ fontSize: '0.6rem', color: THEME.textMuted }}>
+              {isDone ? (
+                <CheckIcon sx={{ fontSize: '0.85rem', color: THEME.onAccent }} />
+              ) : (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: '0.65rem',
+                    color: THEME.textMuted,
+                    opacity: isScheduled ? 1 : 0.45,
+                  }}
+                >
                   {DAY_LABELS[date.day()]}
                 </Typography>
               )}
+            </ButtonBase>
             </Box>
           </Tooltip>
         );
@@ -101,7 +127,7 @@ function StreakGrid({ habit }) {
   }
 
   return (
-    <Box sx={{ display: 'flex', gap: 0.75 }}>
+    <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
       {weeks.map((weekStart, wi) => (
         <Box key={wi} sx={{ display: 'flex', gap: '2px' }}>
           {Array.from({ length: 7 }).map((_, di) => {
@@ -137,19 +163,21 @@ function StreakGrid({ habit }) {
 }
 
 /* ---------- Habit Card ---------- */
-function HabitCard({ habit }) {
-  const { deleteHabit, getCompletionRate } = useHabitContext();
+function HabitCard({ habit, onRequestDelete }) {
+  const { getCompletionRate } = useHabitContext();
   const currentWeekStart = dayjs().startOf('week');
   const rate = getCompletionRate(habit.id);
 
   return (
     <Paper
+      className="card-reveal"
       sx={{
-        p: 2.5,
+        p: { xs: 1.5, sm: 2.5 },
         borderRadius: 3,
         backgroundColor: THEME.surface,
         border: `1px solid ${THEME.border}`,
         mb: 1.5,
+        ...CARD_HOVER_ZOOM,
       }}
       elevation={0}
     >
@@ -177,7 +205,8 @@ function HabitCard({ habit }) {
           </Typography>
           <IconButton
             size="small"
-            onClick={() => deleteHabit(habit.id)}
+            onClick={() => onRequestDelete(habit)}
+            aria-label={`Delete habit ${habit.name}`}
             sx={{ color: THEME.textMuted, '&:hover': { color: THEME.error } }}
           >
             <DeleteIcon sx={{ fontSize: '0.9rem' }} />
@@ -224,12 +253,20 @@ function AddHabitForm({ onClose }) {
   const [name, setName] = useState('');
   const [preset, setPreset] = useState('everyday');
   const [customDays, setCustomDays] = useState([]);
+  const [error, setError] = useState('');
 
   const selectedPreset = SCHEDULE_PRESETS.find((p) => p.value === preset);
   const scheduleDays = preset === 'custom' ? customDays : selectedPreset.days;
 
   const handleSubmit = () => {
-    if (!name.trim() || scheduleDays.length === 0) return;
+    if (!name.trim()) {
+      setError('Enter a name for this habit.');
+      return;
+    }
+    if (scheduleDays.length === 0) {
+      setError('Choose at least one day.');
+      return;
+    }
     addHabit(name.trim(), scheduleDays);
     onClose();
   };
@@ -243,7 +280,7 @@ function AddHabitForm({ onClose }) {
   return (
     <Paper
       sx={{
-        p: 3,
+        p: { xs: 1.5, sm: 3 },
         borderRadius: 3,
         backgroundColor: THEME.surface,
         border: `1px solid ${THEME.borderStrong}`,
@@ -252,17 +289,20 @@ function AddHabitForm({ onClose }) {
       elevation={0}
     >
       <Typography variant="subtitle2" sx={{ fontWeight: 600, color: THEME.text, mb: 2 }}>
-        New Habit
+        Add a habit
       </Typography>
 
       <TextField
-        placeholder="Habit name (e.g. Lift weights)"
+        label="Habit name"
+        placeholder="e.g. Lift weights"
         value={name}
-        onChange={(e) => setName(e.target.value)}
+        onChange={(e) => { setName(e.target.value); setError(''); }}
         onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+        error={!!error && !name.trim()}
         fullWidth
         size="small"
         autoFocus
+        slotProps={{ htmlInput: { maxLength: 100 } }}
         sx={{ mb: 2 }}
       />
 
@@ -302,14 +342,27 @@ function AddHabitForm({ onClose }) {
 
       {/* Custom day selector */}
       {preset === 'custom' && (
-        <Box sx={{ display: 'flex', gap: 0.5, mb: 1.5 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(7, minmax(0, 1fr))',
+            gap: 0.5,
+            mb: 1.5,
+            width: '100%',
+          }}
+        >
           {DAY_FULL.map((label, i) => (
-            <Box
+            <ButtonBase
               key={i}
+              className="habit-day"
               onClick={() => toggleCustomDay(i)}
+              aria-label={`${customDays.includes(i) ? 'Remove' : 'Add'} ${label}`}
+              aria-pressed={customDays.includes(i)}
               sx={{
-                width: 36,
-                height: 36,
+                width: '100%',
+                minWidth: 0,
+                minHeight: 44,
+                height: 44,
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
@@ -318,15 +371,20 @@ function AddHabitForm({ onClose }) {
                 fontSize: '0.7rem',
                 fontWeight: 600,
                 backgroundColor: customDays.includes(i) ? THEME.accent : THEME.bg,
-                color: customDays.includes(i) ? '#fff' : THEME.textSecondary,
+                color: customDays.includes(i) ? THEME.onAccent : THEME.textSecondary,
                 border: `1px solid ${customDays.includes(i) ? THEME.accent : THEME.border}`,
-                transition: 'all 0.15s ease',
               }}
             >
               {DAY_LABELS[i]}
-            </Box>
+            </ButtonBase>
           ))}
         </Box>
+      )}
+
+      {error && (
+        <Typography role="alert" variant="caption" sx={{ color: THEME.error, display: 'block', mb: 1.5 }}>
+          {error}
+        </Typography>
       )}
 
       <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
@@ -340,7 +398,7 @@ function AddHabitForm({ onClose }) {
           disabled={!name.trim() || scheduleDays.length === 0}
           sx={{ textTransform: 'none' }}
         >
-          Add Habit
+          Add habit
         </Button>
       </Box>
     </Paper>
@@ -349,8 +407,17 @@ function AddHabitForm({ onClose }) {
 
 /* ---------- Main HabitView ---------- */
 export default function HabitView() {
-  const { habits } = useHabitContext();
+  const { habits, deleteHabit } = useHabitContext();
   const [showForm, setShowForm] = useState(false);
+  const [pendingDelete, setPendingDelete] = useState(null);
+  const [message, setMessage] = useState('');
+
+  const confirmDelete = () => {
+    if (!pendingDelete) return;
+    deleteHabit(pendingDelete.id);
+    setMessage(`Deleted “${pendingDelete.name}” from this device.`);
+    setPendingDelete(null);
+  };
 
   return (
     <Box sx={{ p: { xs: 1.5, md: 3 }, flex: 1, overflow: 'auto', maxWidth: 640, mx: 'auto', width: '100%' }}>
@@ -369,7 +436,7 @@ export default function HabitView() {
             '&:hover': { backgroundColor: THEME.accentSoft },
           }}
         >
-          Add Habit
+          Add habit
         </Button>
       )}
 
@@ -379,14 +446,30 @@ export default function HabitView() {
       {habits.length === 0 && !showForm && (
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 200 }}>
           <Typography variant="body2" sx={{ color: THEME.textMuted }}>
-            No habits yet. Add one to start tracking!
+            No habits yet. Add one to begin tracking.
           </Typography>
         </Box>
       )}
 
-      {habits.map((habit) => (
-        <HabitCard key={habit.id} habit={habit} />
-      ))}
+      <Box className="card-hover-reveal">
+        {habits.map((habit) => (
+          <HabitCard key={habit.id} habit={habit} onRequestDelete={setPendingDelete} />
+        ))}
+      </Box>
+
+      <ConfirmDialog
+        open={!!pendingDelete}
+        title="Delete this habit?"
+        description={pendingDelete ? `This permanently removes “${pendingDelete.name}” and its completion history from this device.` : ''}
+        onCancel={() => setPendingDelete(null)}
+        onConfirm={confirmDelete}
+      />
+
+      <Snackbar open={!!message} autoHideDuration={4000} onClose={() => setMessage('')}>
+        <Alert severity="success" variant="filled" onClose={() => setMessage('')}>
+          {message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

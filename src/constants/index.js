@@ -1,13 +1,6 @@
 export const DEFAULT_CATEGORIES = ['Work', 'Personal', 'Shopping', 'Health', 'Learning'];
 
-// Keep the old export name as an alias for static references (e.g. CATEGORY_COLORS keys)
-export const CATEGORIES = DEFAULT_CATEGORIES;
-
 export const PRIORITIES = ['High', 'Medium', 'Low'];
-
-export const STORAGE_KEY = 'task-manager-tasks';
-export const SETTINGS_KEY = 'task-manager-settings';
-export const CATEGORIES_KEY = 'task-manager-categories';
 
 export const VIEWS = {
   KANBAN: 'kanban',
@@ -51,9 +44,10 @@ export const THEME = {
 
   // Accent (terracotta / clay)
   accent: '#d97757',
-  accentHover: '#c15f3c',
+  accentHover: '#c16b4f', // pressed clay; Warm Ink still ≥4.5:1
   accentSoft: 'rgba(217, 119, 87, 0.14)', // tinted background
   accentSoftBorder: 'rgba(217, 119, 87, 0.3)',
+  onAccent: '#141413', // Warm Ink on filled clay / sage / error / amber
 
   // Secondary accents
   blue: '#6a9bcc',
@@ -61,6 +55,7 @@ export const THEME = {
 
   // Status
   error: '#e07856',
+  errorHover: '#c86c4e',
   success: '#788c5d',
   warning: '#d9a441',
 
@@ -125,3 +120,59 @@ export const GLASS = {
 
 // Alias for clearer intent in new code.
 export const SURFACE = GLASS;
+
+const CARD_ZOOM_RESET = {
+  transform: 'none',
+  zIndex: 'auto',
+};
+
+export const CARD_HOVER_ZOOM = {
+  position: 'relative',
+  overflow: 'visible',
+  transformOrigin: 'center center',
+  transitionProperty: 'background-color, border-color, box-shadow, transform',
+  transitionDuration: '0.2s',
+  transitionTimingFunction: 'ease',
+  '&:hover, &:focus-visible, &:has(:focus-visible)': {
+    transform: 'scale(1.04)',
+    zIndex: 1,
+    backgroundColor: THEME.surfaceHover,
+    borderColor: THEME.borderStrong,
+    boxShadow: THEME.shadowLight,
+  },
+  '@media (pointer: coarse)': {
+    '&:hover': CARD_ZOOM_RESET,
+  },
+  '@media (prefers-reduced-motion: reduce)': {
+    '&:hover, &:focus-visible, &:has(:focus-visible)': {
+      transform: 'none',
+    },
+  },
+};
+
+export const TASK_CARD_HOVER_ZOOM = {
+  position: 'relative',
+  overflow: 'visible',
+  '&:hover, &:has(:focus-visible)': {
+    zIndex: 1,
+    backgroundColor: THEME.surfaceHover,
+    borderColor: THEME.borderStrong,
+    boxShadow: THEME.shadowLight,
+    '& .task-card-zoom': {
+      transform: 'scale(1.04)',
+    },
+  },
+  '&[data-dragging="true"] .task-card-zoom': {
+    transform: 'none',
+  },
+  '@media (pointer: coarse)': {
+    '&:hover .task-card-zoom': {
+      transform: 'none',
+    },
+  },
+  '@media (prefers-reduced-motion: reduce)': {
+    '&:hover .task-card-zoom, &:has(:focus-visible) .task-card-zoom': {
+      transform: 'none',
+    },
+  },
+};

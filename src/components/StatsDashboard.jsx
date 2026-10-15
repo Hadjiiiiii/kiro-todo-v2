@@ -5,13 +5,14 @@ import AssignmentIcon from '@mui/icons-material/Assignment';
 import WarningIcon from '@mui/icons-material/Warning';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import dayjs from 'dayjs';
-import { CATEGORY_COLORS, THEME } from '../constants';
+import { CATEGORY_COLORS, THEME, CARD_HOVER_ZOOM } from '../constants';
 import { useTaskContext } from '../context/TaskContext';
 import { useJournalContext } from '../context/JournalContext';
 
 function StatCard({ icon, label, value, color, subtitle }) {
   return (
     <Paper
+      className="card-reveal"
       sx={{
         p: 2.5,
         borderRadius: 3,
@@ -19,6 +20,7 @@ function StatCard({ icon, label, value, color, subtitle }) {
         border: `1px solid ${THEME.border}`,
         flex: 1,
         minWidth: { xs: 130, sm: 160 },
+        ...CARD_HOVER_ZOOM,
       }}
       elevation={0}
     >
@@ -61,11 +63,13 @@ function WeeklyChart({ weekDays }) {
 
   return (
     <Paper
+      className="card-reveal"
       sx={{
         p: 3,
         borderRadius: 3,
         backgroundColor: THEME.surface,
         border: `1px solid ${THEME.border}`,
+        ...CARD_HOVER_ZOOM,
       }}
       elevation={0}
     >
@@ -83,7 +87,6 @@ function WeeklyChart({ weekDays }) {
                 minHeight: 4,
                 borderRadius: 1.5,
                 backgroundColor: day.count > 0 ? THEME.accent : 'rgba(255, 255, 255, 0.08)',
-                transition: 'height 0.3s ease',
               }}
             />
             <Typography variant="caption" sx={{ color: THEME.textMuted, fontSize: '0.6rem' }}>
@@ -102,11 +105,13 @@ function CategoryChart({ byCategory }) {
 
   return (
     <Paper
+      className="card-reveal"
       sx={{
         p: 3,
         borderRadius: 3,
         backgroundColor: THEME.surface,
         border: `1px solid ${THEME.border}`,
+        ...CARD_HOVER_ZOOM,
       }}
       elevation={0}
     >
@@ -143,7 +148,6 @@ function CategoryChart({ byCategory }) {
                     height: '100%',
                     borderRadius: 3,
                     backgroundColor: color,
-                    transition: 'width 0.4s ease',
                   }}
                 />
               </Box>
@@ -152,7 +156,7 @@ function CategoryChart({ byCategory }) {
         })}
         {entries.length === 0 && (
           <Typography variant="body2" sx={{ color: THEME.textMuted, textAlign: 'center', py: 2 }}>
-            No data yet
+            Create a task to see category totals.
           </Typography>
         )}
       </Box>
@@ -166,6 +170,7 @@ function CompletionRing({ rate }) {
 
   return (
     <Paper
+      className="card-reveal"
       sx={{
         p: 3,
         borderRadius: 3,
@@ -174,6 +179,7 @@ function CompletionRing({ rate }) {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
+        ...CARD_HOVER_ZOOM,
       }}
       elevation={0}
     >
@@ -241,7 +247,7 @@ export default function StatsDashboard() {
   const journalRate = Math.round((journalEntriesThisMonth / daysElapsed) * 100);
 
   return (
-    <Box sx={{ p: { xs: 1.5, md: 3 }, flex: 1, overflow: 'auto' }}>
+    <Box className="card-hover-reveal" sx={{ p: { xs: 1.5, md: 3 }, flex: 1, overflow: 'auto' }}>
       {/* Top stat cards */}
       <Box sx={{ display: 'flex', gap: { xs: 1, md: 2 }, mb: 3, flexWrap: 'wrap' }}>
         <StatCard
@@ -271,7 +277,7 @@ export default function StatsDashboard() {
         />
         <StatCard
           icon={<MenuBookIcon sx={{ color: THEME.blue, fontSize: '1.25rem' }} />}
-          label="Journal Rate"
+          label="Days journaled"
           value={`${journalRate}%`}
           color={THEME.blue}
           subtitle={`${journalEntriesThisMonth} of ${daysElapsed} days`}

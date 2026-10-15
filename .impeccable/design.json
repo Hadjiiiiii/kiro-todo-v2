@@ -1,0 +1,282 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-10T09:13:58Z",
+  "title": "Design System: TasKeep",
+  "extensions": {
+    "colorMeta": {
+      "canvas": {
+        "role": "neutral",
+        "displayName": "Warm Ink",
+        "canonical": "#141413",
+        "tonalRamp": ["oklch(15% 0.004 95)", "oklch(25% 0.004 95)", "oklch(36% 0.004 95)", "oklch(48% 0.004 95)", "oklch(60% 0.004 95)", "oklch(72% 0.004 95)", "oklch(84% 0.004 95)", "oklch(95% 0.004 95)"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Ledger Surface",
+        "canonical": "#1f1e1d",
+        "tonalRamp": ["oklch(15% 0.005 60)", "oklch(25% 0.005 60)", "oklch(36% 0.005 60)", "oklch(48% 0.005 60)", "oklch(60% 0.005 60)", "oklch(72% 0.005 60)", "oklch(84% 0.005 60)", "oklch(95% 0.005 60)"]
+      },
+      "surface-hover": {
+        "role": "neutral",
+        "displayName": "Raised Charcoal",
+        "canonical": "#262624",
+        "tonalRamp": ["oklch(15% 0.006 100)", "oklch(25% 0.006 100)", "oklch(36% 0.006 100)", "oklch(48% 0.006 100)", "oklch(60% 0.006 100)", "oklch(72% 0.006 100)", "oklch(84% 0.006 100)", "oklch(95% 0.006 100)"]
+      },
+      "surface-elevated": {
+        "role": "neutral",
+        "displayName": "Dialog Charcoal",
+        "canonical": "#2b2a27",
+        "tonalRamp": ["oklch(15% 0.008 90)", "oklch(25% 0.008 90)", "oklch(36% 0.008 90)", "oklch(48% 0.008 90)", "oklch(60% 0.008 90)", "oklch(72% 0.008 90)", "oklch(84% 0.008 90)", "oklch(95% 0.008 90)"]
+      },
+      "text-primary": {
+        "role": "neutral",
+        "displayName": "Warm Cream",
+        "canonical": "#faf9f5",
+        "tonalRamp": ["oklch(15% 0.01 90)", "oklch(25% 0.01 90)", "oklch(36% 0.01 90)", "oklch(48% 0.01 90)", "oklch(60% 0.01 90)", "oklch(72% 0.01 90)", "oklch(84% 0.01 90)", "oklch(95% 0.01 90)"]
+      },
+      "text-secondary": {
+        "role": "neutral",
+        "displayName": "Stone Text",
+        "canonical": "#b0aea5",
+        "tonalRamp": ["oklch(15% 0.015 90)", "oklch(25% 0.015 90)", "oklch(36% 0.015 90)", "oklch(48% 0.015 90)", "oklch(60% 0.015 90)", "oklch(72% 0.015 90)", "oklch(84% 0.015 90)", "oklch(95% 0.015 90)"]
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Muted Stone",
+        "canonical": "#8a887f",
+        "tonalRamp": ["oklch(15% 0.015 90)", "oklch(25% 0.015 90)", "oklch(36% 0.015 90)", "oklch(48% 0.015 90)", "oklch(60% 0.015 90)", "oklch(72% 0.015 90)", "oklch(84% 0.015 90)", "oklch(95% 0.015 90)"]
+      },
+      "border-subtle": {
+        "role": "neutral",
+        "displayName": "Subtle Hairline",
+        "canonical": "rgba(255, 255, 255, 0.08)",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(25% 0 0)", "oklch(36% 0 0)", "oklch(48% 0 0)", "oklch(60% 0 0)", "oklch(72% 0 0)", "oklch(84% 0 0)", "oklch(95% 0 0)"]
+      },
+      "border-strong": {
+        "role": "neutral",
+        "displayName": "Strong Hairline",
+        "canonical": "rgba(255, 255, 255, 0.14)",
+        "tonalRamp": ["oklch(15% 0 0)", "oklch(25% 0 0)", "oklch(36% 0 0)", "oklch(48% 0 0)", "oklch(60% 0 0)", "oklch(72% 0 0)", "oklch(84% 0 0)", "oklch(95% 0 0)"]
+      },
+      "clay": {
+        "role": "primary",
+        "displayName": "Ledger Clay",
+        "canonical": "#d97757",
+        "tonalRamp": ["oklch(15% 0.12 38)", "oklch(25% 0.12 38)", "oklch(36% 0.12 38)", "oklch(48% 0.12 38)", "oklch(60% 0.12 38)", "oklch(72% 0.12 38)", "oklch(84% 0.10 38)", "oklch(95% 0.04 38)"]
+      },
+      "clay-hover": {
+        "role": "primary",
+        "displayName": "Pressed Clay",
+        "canonical": "#c15f3c",
+        "tonalRamp": ["oklch(15% 0.13 39)", "oklch(25% 0.13 39)", "oklch(36% 0.13 39)", "oklch(48% 0.13 39)", "oklch(60% 0.13 39)", "oklch(72% 0.12 39)", "oklch(84% 0.09 39)", "oklch(95% 0.04 39)"]
+      },
+      "clay-soft": {
+        "role": "primary",
+        "displayName": "Clay Wash",
+        "canonical": "rgba(217, 119, 87, 0.14)",
+        "tonalRamp": ["oklch(15% 0.05 38)", "oklch(25% 0.05 38)", "oklch(36% 0.05 38)", "oklch(48% 0.05 38)", "oklch(60% 0.05 38)", "oklch(72% 0.05 38)", "oklch(84% 0.04 38)", "oklch(95% 0.02 38)"]
+      },
+      "clay-soft-border": {
+        "role": "primary",
+        "displayName": "Clay Hairline",
+        "canonical": "rgba(217, 119, 87, 0.3)",
+        "tonalRamp": ["oklch(15% 0.08 38)", "oklch(25% 0.08 38)", "oklch(36% 0.08 38)", "oklch(48% 0.08 38)", "oklch(60% 0.08 38)", "oklch(72% 0.07 38)", "oklch(84% 0.05 38)", "oklch(95% 0.02 38)"]
+      },
+      "blue": {
+        "role": "secondary",
+        "displayName": "Quiet Blue",
+        "canonical": "#6a9bcc",
+        "tonalRamp": ["oklch(15% 0.09 250)", "oklch(25% 0.09 250)", "oklch(36% 0.09 250)", "oklch(48% 0.09 250)", "oklch(60% 0.09 250)", "oklch(72% 0.08 250)", "oklch(84% 0.06 250)", "oklch(95% 0.02 250)"]
+      },
+      "green": {
+        "role": "secondary",
+        "displayName": "Sage Green",
+        "canonical": "#788c5d",
+        "tonalRamp": ["oklch(15% 0.07 125)", "oklch(25% 0.07 125)", "oklch(36% 0.07 125)", "oklch(48% 0.07 125)", "oklch(60% 0.07 125)", "oklch(72% 0.06 125)", "oklch(84% 0.04 125)", "oklch(95% 0.02 125)"]
+      },
+      "amber": {
+        "role": "tertiary",
+        "displayName": "Warm Amber",
+        "canonical": "#d9a441",
+        "tonalRamp": ["oklch(15% 0.11 78)", "oklch(25% 0.11 78)", "oklch(36% 0.11 78)", "oklch(48% 0.11 78)", "oklch(60% 0.11 78)", "oklch(72% 0.10 78)", "oklch(84% 0.07 78)", "oklch(95% 0.03 78)"]
+      },
+      "error": {
+        "role": "tertiary",
+        "displayName": "Soft Error Clay",
+        "canonical": "#e07856",
+        "tonalRamp": ["oklch(15% 0.13 35)", "oklch(25% 0.13 35)", "oklch(36% 0.13 35)", "oklch(48% 0.13 35)", "oklch(60% 0.13 35)", "oklch(72% 0.12 35)", "oklch(84% 0.09 35)", "oklch(95% 0.04 35)"]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Product identity and the largest authentication heading."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Responsive view titles and prominent screen headings."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Brand lockup and sectional titles."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Task titles, form values, navigation, descriptions, and operational copy."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Counts, chips, metadata, helper labels, and small actions."
+      }
+    },
+    "shadows": [
+      {
+        "name": "responsive-lift",
+        "value": "0 2px 12px rgba(0, 0, 0, 0.25)",
+        "purpose": "Hovered cards and floating actions."
+      },
+      {
+        "name": "overlay-lift",
+        "value": "0 8px 32px rgba(0, 0, 0, 0.35)",
+        "purpose": "Dialogs, popovers, and the authentication panel."
+      }
+    ],
+    "motion": [
+      {
+        "name": "state-transition",
+        "value": "200ms ease",
+        "purpose": "Color, border, shadow, opacity, and background state changes."
+      },
+      {
+        "name": "drag-state",
+        "value": "none",
+        "purpose": "Transitions are disabled while a draggable task is active."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "mobile-desktop",
+        "value": "768px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "The clay-filled action used for form submission and principal creation actions.",
+      "html": "<button class=\"ds-btn-primary\">Create</button>",
+      "css": ".ds-btn-primary { background: #d97757; color: #fff; padding: 10px 16px; border: 0; border-radius: 10px; font: 600 0.875rem/1.4 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; text-transform: none; cursor: pointer; transition: background-color 200ms ease; } .ds-btn-primary:hover { background: #c15f3c; } .ds-btn-primary:focus-visible { outline: 2px solid #d97757; outline-offset: 2px; } .ds-btn-primary:active { background: #c15f3c; }"
+    },
+    {
+      "name": "Text Button",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "A restrained secondary action for canceling or changing mode.",
+      "html": "<button class=\"ds-btn-text\">Cancel</button>",
+      "css": ".ds-btn-text { background: transparent; color: #b0aea5; padding: 8px 12px; border: 0; border-radius: 10px; font: 500 0.875rem/1.4 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; text-transform: none; cursor: pointer; transition: background-color 200ms ease, color 200ms ease; } .ds-btn-text:hover { background: rgba(255,255,255,0.05); color: #faf9f5; } .ds-btn-text:focus-visible { outline: 2px solid #d97757; outline-offset: 2px; } .ds-btn-text:active { background: rgba(255,255,255,0.08); }"
+    },
+    {
+      "name": "Search Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "The warm-dark outlined field used for task search and compact data entry.",
+      "html": "<label class=\"ds-field\"><span class=\"ds-field-label\">Search</span><input class=\"ds-field-input\" placeholder=\"Search tasks...\" /></label>",
+      "css": ".ds-field { display: grid; gap: 6px; color: #b0aea5; font: 500 0.75rem/1.4 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; } .ds-field-input { width: 220px; background: #141413; color: #faf9f5; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px 14px; font: 400 0.875rem/1.43 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; transition: border-color 200ms ease; } .ds-field-input::placeholder { color: #8a887f; } .ds-field-input:hover { border-color: rgba(255,255,255,0.14); } .ds-field-input:focus-visible { border-color: #d97757; outline: 1px solid #d97757; }"
+    },
+    {
+      "name": "Active Navigation Item",
+      "kind": "nav",
+      "refersTo": "nav-item-active",
+      "description": "The clay-wash destination state shared by desktop navigation and the mobile sheet.",
+      "html": "<button class=\"ds-nav-active\"><span class=\"ds-nav-dot\" aria-hidden=\"true\"></span><span>Board</span></button>",
+      "css": ".ds-nav-active { width: 220px; display: flex; align-items: center; gap: 12px; background: rgba(217,119,87,0.14); color: #d97757; border: 0; border-radius: 10px; padding: 9px 14px; font: 600 0.9rem/1.43 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; cursor: pointer; transition: background-color 200ms ease; } .ds-nav-dot { width: 16px; height: 16px; border: 2px solid currentColor; border-radius: 4px; } .ds-nav-active:hover { background: rgba(217,119,87,0.14); } .ds-nav-active:focus-visible { outline: 2px solid #d97757; outline-offset: 2px; }"
+    },
+    {
+      "name": "Category Chip",
+      "kind": "chip",
+      "refersTo": "chip",
+      "description": "A compact tinted label for category identity and small status metadata.",
+      "html": "<span class=\"ds-chip\">Work</span>",
+      "css": ".ds-chip { display: inline-flex; align-items: center; height: 18px; padding: 0 7px; border: 0; border-radius: 8px; background: rgba(217,119,87,0.14); color: #d97757; font: 500 0.65rem/1 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; transition: background-color 200ms ease; } .ds-chip:hover { background: rgba(217,119,87,0.2); } .ds-chip:focus-visible { outline: 2px solid #d97757; outline-offset: 2px; }"
+    },
+    {
+      "name": "Task Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "The compact work record combining title, notes, progress, category, and due-date metadata.",
+      "html": "<article class=\"ds-task-card\" tabindex=\"0\"><div class=\"ds-task-row\"><span class=\"ds-task-check\" aria-hidden=\"true\"></span><div><strong class=\"ds-task-title\">Review weekly plan</strong><p class=\"ds-task-note\">Gather open items and choose next priorities.</p><div class=\"ds-task-meta\"><span class=\"ds-task-dot\"></span><span class=\"ds-task-chip\">Personal</span><span class=\"ds-task-date\">Sep 12</span></div></div></div></article>",
+      "css": ".ds-task-card { width: 280px; background: #1f1e1d; color: #faf9f5; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; cursor: pointer; transition: background-color 200ms ease, border-color 200ms ease, box-shadow 200ms ease; } .ds-task-card:hover { background: #262624; border-color: rgba(255,255,255,0.14); box-shadow: 0 2px 12px rgba(0,0,0,0.25); } .ds-task-card:focus-visible { outline: 2px solid #d97757; outline-offset: 2px; } .ds-task-row { display: flex; align-items: flex-start; gap: 6px; } .ds-task-check { width: 16px; height: 16px; border: 1px solid #8a887f; border-radius: 4px; flex: none; margin-top: 2px; } .ds-task-title { display: block; font-size: 0.85rem; line-height: 1.35; font-weight: 500; } .ds-task-note { margin: 4px 0 0; color: #8a887f; font-size: 0.75rem; line-height: 1.4; } .ds-task-meta { display: flex; align-items: center; gap: 6px; margin-top: 8px; } .ds-task-dot { width: 8px; height: 8px; border-radius: 50%; background: #d9a441; } .ds-task-chip { height: 18px; display: inline-flex; align-items: center; padding: 0 7px; border-radius: 8px; background: rgba(106,155,204,0.14); color: #6a9bcc; font-size: 0.65rem; font-weight: 500; } .ds-task-date { color: #8a887f; font-size: 0.65rem; }"
+    },
+    {
+      "name": "Kanban Column",
+      "kind": "custom",
+      "description": "The desktop working panel that groups task cards by category.",
+      "html": "<section class=\"ds-column\"><header class=\"ds-column-header\"><span class=\"ds-column-dot\"></span><strong>Work</strong><span class=\"ds-column-count\">3</span></header><div class=\"ds-column-body\"><span class=\"ds-column-empty\">Drop tasks here</span></div></section>",
+      "css": ".ds-column { width: 280px; min-height: 260px; display: flex; flex-direction: column; overflow: hidden; background: #1f1e1d; color: #faf9f5; border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; transition: background-color 200ms ease, border-color 200ms ease; } .ds-column:hover { border-color: rgba(255,255,255,0.14); } .ds-column:focus-within { border-color: rgba(217,119,87,0.3); } .ds-column-header { display: flex; align-items: center; gap: 8px; padding: 16px 16px 12px; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 0.85rem; } .ds-column-dot { width: 8px; height: 8px; border-radius: 50%; background: #d97757; } .ds-column-count { height: 18px; display: inline-flex; align-items: center; padding: 0 7px; border-radius: 8px; background: rgba(255,255,255,0.06); color: #b0aea5; font-size: 0.65rem; } .ds-column-body { flex: 1; display: grid; place-items: center; padding: 8px; } .ds-column-empty { color: #8a887f; font-size: 0.8rem; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Warm Personal Ledger",
+    "overview": "TasKeep is a compact, warm-dark workspace: calm enough for daily reflection, structured enough for operational task work, and restrained enough to keep mixed personal data legible. Near-black planes establish continuity across tasks, habits, journals, statistics, and finances; warm cream type and a sparing clay accent supply hierarchy without turning the interface into a dashboard spectacle.\n\nThe system is dense but not cramped. Flat panels, hairline borders, serif headings, small sans-serif labels, and rounded controls create the feeling of a carefully kept personal ledger translated into a responsive application. Product privacy is expressed through quietness and containment rather than security theater.",
+    "keyCharacteristics": [
+      "Warm near-black canvas with layered charcoal surfaces",
+      "Clay accent reserved for selection, primary action, and progress",
+      "Editorial serif headings paired with compact sans-serif controls",
+      "Flat-at-rest containers with soft, state-driven elevation",
+      "Desktop rail and column layouts that collapse into touch-sized mobile navigation and accordions"
+    ],
+    "rules": [
+      {
+        "name": "The Clay Signal Rule",
+        "body": "Clay identifies an action, selection, or meaningful progress state; it does not become a decorative field.",
+        "section": "colors"
+      },
+      {
+        "name": "The Warm Neutral Rule",
+        "body": "New surfaces stay within the established warm-charcoal and cream family instead of introducing blue-black backgrounds or pure white panels.",
+        "section": "colors"
+      },
+      {
+        "name": "The Editorial Header Rule",
+        "body": "Serif type belongs to product and view hierarchy; controls, records, navigation, and metadata remain sans-serif.",
+        "section": "typography"
+      },
+      {
+        "name": "The Compact Label Rule",
+        "body": "Uppercase is limited to tiny orienting labels such as “Overview” and “More views,” with restrained tracking rather than used for actions.",
+        "section": "typography"
+      },
+      {
+        "name": "The Contained Workspace Rule",
+        "body": "The application frame stays fixed to the viewport; individual boards, lists, and panels own scrolling so global navigation remains stable.",
+        "section": "layout"
+      },
+      {
+        "name": "The Flat-at-Rest Rule",
+        "body": "Cards and working surfaces use tone and border at rest; shadows indicate interaction or true overlay elevation.",
+        "section": "elevation"
+      },
+      {
+        "name": "The Nested Radius Rule",
+        "body": "Radius increases with container scale: controls sit inside cards, cards inside panels, and dialogs receive the largest corners.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do use Ledger Clay to communicate selection, primary action, or progress.",
+      "Do preserve the warm-charcoal surface sequence from canvas through dialog elevation.",
+      "Do keep operational copy and metadata compact while reserving serif type for headings.",
+      "Do preserve 44px minimum touch targets and the 768px desktop/mobile behavior.",
+      "Do use borders and tonal changes before adding shadows."
+    ],
+    "donts": [
+      "Don't spread the clay accent across large decorative areas or routine body copy.",
+      "Don't add cool blue-black canvases, pure-white panels, or high-chroma neon status colors.",
+      "Don't place resting shadows on every card or panel.",
+      "Don't use uppercase tracking for primary actions or ordinary navigation.",
+      "Don't flatten desktop and mobile into the same navigation or Kanban composition."
+    ]
+  }
+}

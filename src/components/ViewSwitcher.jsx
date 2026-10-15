@@ -6,7 +6,7 @@ import { VIEWS, THEME } from '../constants';
 
 const VIEW_OPTIONS = [
   { id: VIEWS.KANBAN, label: 'Board', icon: <ViewKanbanIcon fontSize="small" /> },
-  { id: VIEWS.LIST, label: 'List', icon: <FormatListBulletedIcon fontSize="small" /> },
+  { id: VIEWS.LIST, label: 'Logbook', icon: <FormatListBulletedIcon fontSize="small" /> },
   { id: VIEWS.CALENDAR, label: 'Calendar', icon: <CalendarMonthIcon fontSize="small" /> },
 ];
 
@@ -39,7 +39,7 @@ export default function ViewSwitcher({ currentView, onViewChange }) {
         }}
       >
         {VIEW_OPTIONS.map((opt) => (
-          <ToggleButton key={opt.id} value={opt.id}>
+          <ToggleButton key={opt.id} value={opt.id} aria-label={opt.label}>
             <Tooltip title={opt.label}>
               {opt.icon}
             </Tooltip>

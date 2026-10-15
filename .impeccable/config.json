@@ -1,0 +1,15 @@
+{
+  "buildPath": "code",
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "overused-font",
+        "value": "inter",
+        "createdAt": "2026-09-10T09:38:39.764Z",
+        "reason": "Incumbent body typeface documented as normative in DESIGN.md"
+      }
+    ]
+  }
+}

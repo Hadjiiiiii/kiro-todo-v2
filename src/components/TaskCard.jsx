@@ -7,16 +7,27 @@ import {
   Box,
   Checkbox,
   LinearProgress,
+  IconButton,
+  ButtonBase,
 } from '@mui/material';
 import CalendarTodayIcon from '@mui/icons-material/CalendarToday';
 import RepeatIcon from '@mui/icons-material/Repeat';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import dayjs from 'dayjs';
-import { PRIORITY_COLORS, CATEGORY_COLORS, THEME } from '../constants';
+import { PRIORITY_COLORS, CATEGORY_COLORS, THEME, TASK_CARD_HOVER_ZOOM } from '../constants';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
 const TaskCard = forwardRef(function TaskCard(
-  { task, onToggleComplete, onClick, isDragging },
+  {
+    task,
+    onToggleComplete,
+    onClick,
+    isDragging,
+    dragAttributes,
+    dragListeners,
+    style,
+  },
   ref
 ) {
   const isOverdue =
@@ -25,42 +36,72 @@ const TaskCard = forwardRef(function TaskCard(
   const subtaskCount = task.subtasks?.length || 0;
   const subtaskDone = task.subtasks?.filter((s) => s.completed).length || 0;
   const subtaskProgress = subtaskCount > 0 ? (subtaskDone / subtaskCount) * 100 : 0;
+  const titleId = `task-title-${task.id}`;
+  const canDrag = Boolean(dragListeners);
 
   return (
     <Card
       ref={ref}
+      style={style}
+      component="article"
+      aria-labelledby={titleId}
       data-dragging={isDragging}
+      className="card-reveal"
       sx={{
         mb: 1,
-        cursor: 'pointer',
         opacity: isDragging ? 0.5 : task.completed ? 0.5 : 1,
         transform: isDragging ? 'rotate(2deg)' : 'none',
         backgroundColor: THEME.surface,
         border: `1px solid ${THEME.border}`,
         borderRadius: '12px',
         boxShadow: 'none',
-        '&:hover': {
-          backgroundColor: THEME.surfaceHover,
-          borderColor: THEME.borderStrong,
-          boxShadow: THEME.shadowLight,
-        },
+        ...TASK_CARD_HOVER_ZOOM,
       }}
-      onClick={() => onClick(task)}
     >
+      <Box
+        className="task-card-zoom"
+        sx={{
+          transformOrigin: 'center center',
+          transition: 'transform 0.2s ease',
+        }}
+      >
       <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.75 }}>
+        <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 0.5 }}>
           <Checkbox
             checked={task.completed}
-            onChange={(e) => {
-              e.stopPropagation();
-              onToggleComplete(task.id);
-            }}
-            onClick={(e) => e.stopPropagation()}
+            disabled={isDragging}
+            onChange={() => onToggleComplete(task.id)}
+            aria-label={`${task.completed ? 'Mark incomplete' : 'Mark complete'}: ${task.title}`}
             size="small"
-            sx={{ p: 0, mt: 0.2 }}
+            slotProps={{
+              input: {
+                'aria-label': `${task.completed ? 'Mark incomplete' : 'Mark complete'}: ${task.title}`,
+              },
+            }}
+            sx={{
+              p: 0.5,
+              mt: -0.5,
+              ml: -0.5,
+              flexShrink: 0,
+              '@media (pointer: coarse)': { p: 1.25 },
+            }}
           />
-          <Box sx={{ flex: 1, minWidth: 0 }}>
+          <ButtonBase
+            onClick={() => onClick(task)}
+            aria-label={`Open task ${task.title}`}
+            disabled={isDragging}
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              display: 'block',
+              textAlign: 'left',
+              py: 0.25,
+              borderRadius: 1,
+              '@media (pointer: coarse)': { minHeight: 44 },
+            }}
+          >
             <Typography
+              id={titleId}
               variant="body2"
               sx={{
                 fontWeight: 500,
@@ -89,7 +130,6 @@ const TaskCard = forwardRef(function TaskCard(
               </Typography>
             )}
 
-            {/* Subtask progress */}
             {subtaskCount > 0 && (
               <Box sx={{ mt: 1, display: 'flex', alignItems: 'center', gap: 0.75 }}>
                 <LinearProgress
@@ -115,10 +155,10 @@ const TaskCard = forwardRef(function TaskCard(
               </Box>
             )}
 
-            {/* Tags row */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 1, flexWrap: 'wrap' }}>
-              {/* Priority dot */}
               <Box
+                role="img"
+                aria-label={`${task.priority} priority`}
                 sx={{
                   width: 8,
                   height: 8,
@@ -126,7 +166,6 @@ const TaskCard = forwardRef(function TaskCard(
                   backgroundColor: PRIORITY_COLORS[task.priority],
                 }}
               />
-              {/* Category chip */}
               <Chip
                 label={task.category}
                 size="small"
@@ -139,7 +178,6 @@ const TaskCard = forwardRef(function TaskCard(
                   border: 'none',
                 }}
               />
-              {/* Due date */}
               {task.dueDate && (
                 <Chip
                   icon={<CalendarTodayIcon sx={{ fontSize: '0.6rem !important' }} />}
@@ -157,14 +195,31 @@ const TaskCard = forwardRef(function TaskCard(
                   }}
                 />
               )}
-              {/* Recurring indicator */}
               {task.recurrence && task.recurrence !== 'none' && (
-                <RepeatIcon sx={{ fontSize: '0.75rem', color: THEME.textMuted }} />
+                <RepeatIcon titleAccess={`Repeats ${task.recurrence}`} sx={{ fontSize: '0.75rem', color: THEME.textMuted }} />
               )}
             </Box>
-          </Box>
+          </ButtonBase>
+          {canDrag && (
+            <IconButton
+              {...dragAttributes}
+              {...dragListeners}
+              aria-label={`Move task ${task.title}`}
+              sx={{
+                color: THEME.textMuted,
+                cursor: 'grab',
+                touchAction: 'none',
+                flexShrink: 0,
+                mt: -0.5,
+                mr: -0.5,
+              }}
+            >
+              <DragIndicatorIcon sx={{ fontSize: '1.1rem' }} />
+            </IconButton>
+          )}
         </Box>
       </CardContent>
+      </Box>
     </Card>
   );
 });
@@ -177,7 +232,7 @@ export default function SortableTaskCard({ task, onToggleComplete, onClick }) {
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task.id });
+  } = useSortable({ id: task.id, data: { title: task.title } });
 
   const style = {
     transform: CSS.Transform.toString(transform),
@@ -185,14 +240,16 @@ export default function SortableTaskCard({ task, onToggleComplete, onClick }) {
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <TaskCard
-        task={task}
-        onToggleComplete={onToggleComplete}
-        onClick={onClick}
-        isDragging={isDragging}
-      />
-    </div>
+    <TaskCard
+      ref={setNodeRef}
+      style={style}
+      task={task}
+      onToggleComplete={onToggleComplete}
+      onClick={onClick}
+      isDragging={isDragging}
+      dragAttributes={attributes}
+      dragListeners={listeners}
+    />
   );
 }
 

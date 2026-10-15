@@ -23,7 +23,7 @@ import { VIEWS, THEME } from '../constants';
 
 const PRIMARY_ITEMS = [
   { id: VIEWS.KANBAN, label: 'Board', icon: <ViewKanbanIcon /> },
-  { id: VIEWS.LIST, label: 'List', icon: <FormatListBulletedIcon /> },
+  { id: VIEWS.LIST, label: 'Logbook', icon: <FormatListBulletedIcon /> },
   { id: VIEWS.CALENDAR, label: 'Calendar', icon: <CalendarMonthIcon /> },
 ];
 
@@ -69,6 +69,8 @@ export default function MobileNav({ currentView, onViewChange, onOpenAccount }) 
   return (
     <>
       <Box
+        component="nav"
+        aria-label="Primary"
         sx={{
           position: 'fixed',
           bottom: 0,
@@ -76,6 +78,8 @@ export default function MobileNav({ currentView, onViewChange, onOpenAccount }) 
           right: 0,
           zIndex: 1100,
           borderTop: `1px solid ${THEME.border}`,
+          pb: 'env(safe-area-inset-bottom)',
+          backgroundColor: THEME.surface,
         }}
       >
         <BottomNavigation
@@ -190,7 +194,7 @@ export default function MobileNav({ currentView, onViewChange, onOpenAccount }) 
               </ListItemIcon>
               <ListItemText
                 primary={item.label}
-                primaryTypographyProps={{ fontSize: '0.9rem', fontWeight: 500 }}
+                slotProps={{ primary: { fontSize: '0.9rem', fontWeight: 500 } }}
               />
             </ListItemButton>
           ))}

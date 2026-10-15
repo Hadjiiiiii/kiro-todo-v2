@@ -2,13 +2,22 @@ import { useState, useMemo } from 'react';
 import {
   Box,
   Typography,
-  Checkbox,
   Chip,
   IconButton,
+  Button,
+  ButtonBase,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  TextField,
+  Tooltip,
 } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import CheckCircleOutlinedIcon from '@mui/icons-material/CheckCircleOutlined';
 import dayjs from 'dayjs';
 import {
   DndContext,
@@ -24,25 +33,23 @@ import { useTaskContext } from '../context/TaskContext';
 const DAY_INITIALS = ['SU', 'M', 'T', 'W', 'TH', 'F', 'SA'];
 
 /* ---------- Draggable task item (left panel) ---------- */
-function DraggableTask({ task, onTaskClick }) {
+function DraggableTask({ task, onTaskClick, onFinish }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
     id: task.id,
+    data: { title: task.title },
   });
 
   return (
     <Box
       ref={setNodeRef}
-      {...attributes}
-      {...listeners}
-      onClick={() => onTaskClick(task)}
       sx={{
         display: 'flex',
         alignItems: 'center',
-        gap: 1,
-        px: 1.5,
-        py: 1,
+        gap: 0.5,
+        px: 0.75,
+        py: 0.5,
+        minHeight: 44,
         borderRadius: 2,
-        cursor: 'grab',
         backgroundColor: THEME.surface,
         border: `1px solid ${THEME.border}`,
         mb: 0.75,
@@ -53,41 +60,82 @@ function DraggableTask({ task, onTaskClick }) {
         },
       }}
     >
-      <DragIndicatorIcon sx={{ fontSize: '0.9rem', color: THEME.textMuted, flexShrink: 0 }} />
-      <Box
+      <IconButton
+        {...attributes}
+        {...listeners}
+        aria-label={`Drag ${task.title} onto a finished date`}
         sx={{
-          width: 6,
-          height: 6,
-          borderRadius: '50%',
-          backgroundColor: PRIORITY_COLORS[task.priority],
+          color: THEME.textMuted,
+          cursor: 'grab',
+          touchAction: 'none',
           flexShrink: 0,
         }}
-      />
-      <Typography
-        variant="body2"
+      >
+        <DragIndicatorIcon sx={{ fontSize: '1.1rem' }} />
+      </IconButton>
+      <ButtonBase
+        onClick={() => onTaskClick(task)}
+        aria-label={`Open task ${task.title}`}
         sx={{
           flex: 1,
-          fontSize: '0.82rem',
-          fontWeight: 500,
-          color: THEME.text,
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          whiteSpace: 'nowrap',
+          minWidth: 0,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          justifyContent: 'flex-start',
+          textAlign: 'left',
+          py: 0.75,
+          borderRadius: 1,
         }}
       >
-        {task.title}
-      </Typography>
-      <Chip
-        label={task.category}
-        size="small"
-        sx={{
-          height: 18,
-          fontSize: '0.6rem',
-          backgroundColor: `${CATEGORY_COLORS[task.category] || THEME.accent}22`,
-          color: CATEGORY_COLORS[task.category] || THEME.accent,
-          border: 'none',
-        }}
-      />
+        <Box
+          role="img"
+          aria-label={`${task.priority} priority`}
+          sx={{
+            width: 6,
+            height: 6,
+            borderRadius: '50%',
+            backgroundColor: PRIORITY_COLORS[task.priority],
+            flexShrink: 0,
+          }}
+        />
+        <Typography
+          variant="body2"
+          sx={{
+            flex: 1,
+            minWidth: 0,
+            fontSize: '0.82rem',
+            fontWeight: 500,
+            color: THEME.text,
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {task.title}
+        </Typography>
+        <Chip
+          label={task.category}
+          size="small"
+          sx={{
+            height: 18,
+            fontSize: '0.6rem',
+            display: { xs: 'none', sm: 'inline-flex' },
+            backgroundColor: `${CATEGORY_COLORS[task.category] || THEME.accent}22`,
+            color: CATEGORY_COLORS[task.category] || THEME.accent,
+            border: 'none',
+          }}
+        />
+      </ButtonBase>
+      <Tooltip title="Mark finished on a date">
+        <IconButton
+          aria-label={`Mark ${task.title} finished on a date`}
+          onClick={() => onFinish(task)}
+          sx={{ color: THEME.textMuted, flexShrink: 0, '&:hover': { color: THEME.green } }}
+        >
+          <CheckCircleOutlinedIcon sx={{ fontSize: '1.15rem' }} />
+        </IconButton>
+      </Tooltip>
     </Box>
   );
 }
@@ -142,18 +190,11 @@ function DayRow({ date, accomplishedTasks, isToday }) {
         px: 2,
         py: 0.75,
         borderRadius: 1.5,
-        minHeight: 36,
-        backgroundColor: isOver
-          ? THEME.accentSoft
-          : isToday
-            ? 'rgba(217, 119, 87, 0.06)'
-            : 'transparent',
-        border: isOver
+        minHeight: 44,
+        backgroundColor: isOver || isToday ? THEME.accentSoft : 'transparent',
+        border: isOver || isToday
           ? `1px solid ${THEME.accentSoftBorder}`
-          : isToday
-            ? `1px solid rgba(217, 119, 87, 0.2)`
-            : '1px solid transparent',
-        transition: 'all 0.15s ease',
+          : '1px solid transparent',
       }}
     >
       {/* Day label */}
@@ -212,6 +253,8 @@ export default function ListView({ filteredTasks, onTaskClick }) {
   const { tasks, accomplishTask } = useTaskContext();
   const [currentMonth, setCurrentMonth] = useState(dayjs().startOf('month'));
   const [activeId, setActiveId] = useState(null);
+  const [finishTask, setFinishTask] = useState(null);
+  const [finishDate, setFinishDate] = useState(dayjs().format('YYYY-MM-DD'));
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
@@ -266,6 +309,17 @@ export default function ListView({ filteredTasks, onTaskClick }) {
 
   const activeTask = activeId ? tasks.find((t) => t.id === activeId) : null;
 
+  const openFinishDialog = (task) => {
+    setFinishTask(task);
+    setFinishDate(dayjs().format('YYYY-MM-DD'));
+  };
+
+  const confirmFinish = () => {
+    if (!finishTask || !finishDate) return;
+    accomplishTask(finishTask.id, finishDate);
+    setFinishTask(null);
+  };
+
   return (
     <DndContext
       sensors={sensors}
@@ -297,19 +351,27 @@ export default function ListView({ filteredTasks, onTaskClick }) {
                 fontWeight: 600,
               }}
             >
-              Active Tasks — {activeTasks.length}
+              To finish · {activeTasks.length}
+            </Typography>
+            <Typography variant="body2" sx={{ color: THEME.textSecondary, fontSize: '0.75rem', mt: 0.5 }}>
+              Drag onto a day, or tap the check to pick a date.
             </Typography>
           </Box>
           <Box sx={{ flex: 1, overflow: 'auto', p: { xs: 1, md: 1.5 } }}>
             {activeTasks.length === 0 ? (
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: { xs: 60, md: 120 } }}>
                 <Typography variant="body2" sx={{ color: THEME.textMuted, fontSize: '0.8rem' }}>
-                  No active tasks
+                  No matching tasks to finish.
                 </Typography>
               </Box>
             ) : (
               activeTasks.map((task) => (
-                <DraggableTask key={task.id} task={task} onTaskClick={onTaskClick} />
+                <DraggableTask
+                  key={task.id}
+                  task={task}
+                  onTaskClick={onTaskClick}
+                  onFinish={openFinishDialog}
+                />
               ))
             )}
           </Box>
@@ -339,19 +401,21 @@ export default function ListView({ filteredTasks, onTaskClick }) {
             <IconButton
               size="small"
               onClick={() => setCurrentMonth((m) => m.subtract(1, 'month'))}
+              aria-label="Previous month"
               sx={{ color: THEME.textSecondary }}
             >
               <ChevronLeftIcon fontSize="small" />
             </IconButton>
             <Typography
               variant="subtitle2"
-              sx={{ fontWeight: 600, color: THEME.text, minWidth: 120, textAlign: 'center', fontSize: '0.85rem' }}
+              sx={{ fontWeight: 600, color: THEME.text, minWidth: { xs: 120, md: 220 }, textAlign: 'center', fontSize: '0.85rem' }}
             >
-              {currentMonth.format('MMMM YYYY')}
+              {currentMonth.format('[Finished] MMMM YYYY')}
             </Typography>
             <IconButton
               size="small"
               onClick={() => setCurrentMonth((m) => m.add(1, 'month'))}
+              aria-label="Next month"
               sx={{ color: THEME.textSecondary }}
             >
               <ChevronRightIcon fontSize="small" />
@@ -375,6 +439,28 @@ export default function ListView({ filteredTasks, onTaskClick }) {
       <DragOverlay>
         <TaskDragOverlay task={activeTask} />
       </DragOverlay>
+      <Dialog open={!!finishTask} onClose={() => setFinishTask(null)} aria-labelledby="finish-task-title">
+        <DialogTitle id="finish-task-title">When did you finish this task?</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: THEME.textSecondary, mb: 2 }}>
+            {finishTask?.title}
+          </DialogContentText>
+          <TextField
+            label="Finished on"
+            type="date"
+            value={finishDate}
+            onChange={(event) => setFinishDate(event.target.value)}
+            fullWidth
+            slotProps={{ inputLabel: { shrink: true } }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setFinishTask(null)}>Cancel</Button>
+          <Button variant="contained" onClick={confirmFinish} disabled={!finishDate}>
+            Mark finished
+          </Button>
+        </DialogActions>
+      </Dialog>
     </DndContext>
   );
 }

@@ -14,16 +14,32 @@ import {
   AccordionSummary,
   AccordionDetails,
   useMediaQuery,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  ButtonBase,
 } from '@mui/material';
 import {
   DndContext,
   closestCorners,
   DragOverlay,
   PointerSensor,
+  KeyboardSensor,
   useSensor,
   useSensors,
 } from '@dnd-kit/core';
-import { SortableContext, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
+import {
+  SortableContext,
+  verticalListSortingStrategy,
+  arrayMove,
+  sortableKeyboardCoordinates,
+} from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import AddIcon from '@mui/icons-material/Add';
 import CloseIcon from '@mui/icons-material/Close';
@@ -40,6 +56,7 @@ function KanbanColumn({ category, tasks, onToggleComplete, onTaskClick, onDelete
 
   return (
     <Paper
+      className="board-category"
       sx={{
         flex: 1,
         minWidth: 280,
@@ -50,7 +67,6 @@ function KanbanColumn({ category, tasks, onToggleComplete, onTaskClick, onDelete
         borderRadius: 3,
         display: 'flex',
         flexDirection: 'column',
-        transition: 'all 0.2s ease',
         overflow: 'hidden',
       }}
       elevation={0}
@@ -65,21 +81,34 @@ function KanbanColumn({ category, tasks, onToggleComplete, onTaskClick, onDelete
           borderBottom: `1px solid ${THEME.border}`,
         }}
       >
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
           <Box
             sx={{
               width: 8,
               height: 8,
               borderRadius: '50%',
               backgroundColor: color,
+              flexShrink: 0,
             }}
           />
-          <Typography
-            variant="subtitle2"
-            sx={{ fontWeight: 600, color: THEME.text, fontSize: '0.85rem' }}
+          <ButtonBase
+            onClick={() => onColumnClick?.(category)}
+            aria-label={`Open ${category} category`}
+            sx={{
+              borderRadius: 1,
+              px: 0.5,
+              minHeight: 32,
+              justifyContent: 'flex-start',
+              textAlign: 'left',
+            }}
           >
-            {category}
-          </Typography>
+            <Typography
+              variant="subtitle2"
+              sx={{ fontWeight: 600, color: THEME.text, fontSize: '0.85rem' }}
+            >
+              {category}
+            </Typography>
+          </ButtonBase>
           <Chip
             label={tasks.length}
             size="small"
@@ -94,14 +123,13 @@ function KanbanColumn({ category, tasks, onToggleComplete, onTaskClick, onDelete
           />
         </Box>
         {onDelete && (
-          <Tooltip title={`Remove "${category}" column`}>
+          <Tooltip title={`Remove ${category} category`}>
             <IconButton
               size="small"
               onClick={() => onDelete(category)}
+              aria-label={`Remove ${category} category`}
               sx={{
                 color: THEME.textMuted,
-                width: 24,
-                height: 24,
                 '&:hover': { color: THEME.error },
               }}
             >
@@ -117,6 +145,7 @@ function KanbanColumn({ category, tasks, onToggleComplete, onTaskClick, onDelete
             onColumnClick(category);
           }
         }}
+        className="card-hover-reveal"
         sx={{
           flex: 1,
           p: 1,
@@ -193,7 +222,7 @@ function AddColumnButton({ onAdd }) {
         elevation={0}
       >
         <TextField
-          placeholder="Column name..."
+          label="Category name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -202,30 +231,33 @@ function AddColumnButton({ onAdd }) {
           sx={{
             '& .MuiOutlinedInput-root': { fontSize: '0.875rem' },
           }}
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton size="small" onClick={handleSubmit} disabled={!name.trim()}>
-                  <AddIcon fontSize="small" sx={{ color: name.trim() ? THEME.accent : THEME.textMuted }} />
-                </IconButton>
-              </InputAdornment>
-            ),
+          slotProps={{
+            input: {
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={handleSubmit} disabled={!name.trim()} aria-label="Add category">
+                    <AddIcon fontSize="small" sx={{ color: name.trim() ? THEME.accent : THEME.textMuted }} />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            },
           }}
         />
-        <Typography
-          variant="caption"
-          sx={{ color: THEME.textMuted, fontSize: '0.7rem', cursor: 'pointer' }}
+        <Button
+          size="small"
           onClick={() => { setAdding(false); setName(''); }}
+          sx={{ color: THEME.textMuted, alignSelf: 'flex-start' }}
         >
           Cancel
-        </Typography>
+        </Button>
       </Paper>
     );
   }
 
   return (
-    <Box
+    <ButtonBase
       onClick={() => setAdding(true)}
+      aria-label="Add category"
       sx={{
         minWidth: 240,
         height: 80,
@@ -237,7 +269,6 @@ function AddColumnButton({ onAdd }) {
         border: `1px dashed ${THEME.border}`,
         cursor: 'pointer',
         color: THEME.textMuted,
-        transition: 'all 0.2s ease',
         '&:hover': {
           borderColor: THEME.accent,
           color: THEME.accent,
@@ -247,17 +278,26 @@ function AddColumnButton({ onAdd }) {
     >
       <AddIcon sx={{ fontSize: '1rem' }} />
       <Typography variant="body2" sx={{ fontSize: '0.8rem', fontWeight: 500 }}>
-        Add Column
+        Add category
       </Typography>
-    </Box>
+    </ButtonBase>
   );
 }
 
-export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
+export default function KanbanBoard({
+  filteredTasks,
+  onTaskClick,
+  onAddTask,
+  onAddTodayTask,
+  showOnboarding,
+  onDismissOnboarding,
+}) {
   const { tasks, categories, toggleComplete, reorderTasks, addCategory, deleteCategory } = useTaskContext();
   const [activeId, setActiveId] = useState(null);
   const [editMode, setEditMode] = useState(false);
   const [zoomedCategory, setZoomedCategory] = useState(null);
+  const [pendingCategory, setPendingCategory] = useState(null);
+  const [moveTarget, setMoveTarget] = useState('');
   const [expandedPanels, setExpandedPanels] = useState(() => categories.length > 0 ? [categories[0]] : []);
   const isMobile = useMediaQuery('(max-width:767px)');
 
@@ -266,7 +306,45 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
       activationConstraint: {
         distance: 8,
       },
-    })
+    }),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    }),
+  );
+
+  const renderEmptyGuide = () => showOnboarding && tasks.length === 0 && (
+    <Box
+      sx={{
+        mx: 2,
+        mt: 2,
+        p: { xs: 2, md: 2.5 },
+        display: 'flex',
+        alignItems: { xs: 'flex-start', sm: 'center' },
+        justifyContent: 'space-between',
+        flexDirection: { xs: 'column', sm: 'row' },
+        gap: 2,
+        borderRadius: 3,
+        backgroundColor: THEME.surface,
+        border: `1px solid ${THEME.borderStrong}`,
+      }}
+    >
+      <Box>
+        <Typography variant="h6" sx={{ color: THEME.text, fontSize: '1.05rem' }}>
+          Begin with one task for today
+        </Typography>
+        <Typography variant="body2" sx={{ color: THEME.textSecondary, mt: 0.5 }}>
+          You will see it organized here immediately. It stays private on this device.
+        </Typography>
+      </Box>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+        <Button onClick={onDismissOnboarding}>
+          I’ll explore on my own
+        </Button>
+        <Button variant="contained" startIcon={<AddIcon />} onClick={onAddTodayTask}>
+          Add today’s task
+        </Button>
+      </Box>
+    </Box>
   );
 
   const getTasksByCategory = (category) => {
@@ -279,6 +357,33 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
     if (categories.includes(id)) return id;
     const task = tasks.find((t) => t.id === id);
     return task ? task.category : null;
+  };
+
+  const getTaskTitle = (id) => tasks.find((t) => t.id === id)?.title ?? 'task';
+
+  const dndAccessibility = {
+    announcements: {
+      onDragStart({ active }) {
+        return `Picked up ${getTaskTitle(active.id)}.`;
+      },
+      onDragOver({ active, over }) {
+        if (!over) return `Task ${getTaskTitle(active.id)} is no longer over a category.`;
+        const overCategory = findContainer(over.id);
+        return `Task ${getTaskTitle(active.id)} is over ${overCategory || over.id}.`;
+      },
+      onDragEnd({ active, over }) {
+        if (!over) return `Dropped ${getTaskTitle(active.id)}.`;
+        const overCategory = findContainer(over.id);
+        return `Moved ${getTaskTitle(active.id)} to ${overCategory || over.id}.`;
+      },
+      onDragCancel({ active }) {
+        return `Cancelled moving ${getTaskTitle(active.id)}.`;
+      },
+    },
+    screenReaderInstructions: {
+      draggable:
+        'To pick up a task, press Space or Enter. Use the arrow keys to move it between categories, then Space or Enter to drop. Press Escape to cancel.',
+    },
   };
 
   const handleDragStart = (event) => {
@@ -342,17 +447,25 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
   };
 
   const handleDeleteColumn = (category) => {
+    const remaining = categories.filter((c) => c !== category);
+    if (remaining.length === 0) return;
+    setPendingCategory(category);
+    setMoveTarget(remaining[0]);
+  };
+
+  const confirmDeleteColumn = () => {
+    if (!pendingCategory) return;
+    const category = pendingCategory;
     const columnTasks = tasks.filter((t) => t.category === category);
     if (columnTasks.length > 0) {
-      const remaining = categories.filter((c) => c !== category);
-      if (remaining.length === 0) return;
-      const target = remaining[0];
       const updatedTasks = tasks.map((t) =>
-        t.category === category ? { ...t, category: target } : t
+        t.category === category ? { ...t, category: moveTarget } : t
       );
       reorderTasks(updatedTasks);
     }
     deleteCategory(category);
+    setPendingCategory(null);
+    setMoveTarget('');
   };
 
   const handleAccordionToggle = (category) => {
@@ -368,6 +481,7 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
   // Mobile accordion view
   const renderMobileAccordion = () => (
     <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+      {renderEmptyGuide()}
       {/* Edit mode toolbar */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', px: 2, pt: 1.5, pb: 0.5 }}>
         <Button
@@ -392,10 +506,11 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
         </Button>
       </Box>
 
-      <Box sx={{ flex: 1, overflow: 'auto', px: 1.5, pb: 2 }}>
+      <Box className="category-hover-reveal" sx={{ flex: 1, overflow: 'auto', px: 1.5, pb: 2 }}>
         <DndContext
           sensors={sensors}
           collisionDetection={closestCorners}
+          accessibility={dndAccessibility}
           onDragStart={handleDragStart}
           onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
@@ -408,6 +523,7 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
             return (
               <Accordion
                 key={category}
+                className="board-category"
                 expanded={isExpanded}
                 onChange={() => handleAccordionToggle(category)}
                 disableGutters
@@ -468,6 +584,7 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
                         e.stopPropagation();
                         handleDeleteColumn(category);
                       }}
+                      aria-label={`Remove ${category} category`}
                       sx={{
                         color: THEME.textMuted,
                         width: 28,
@@ -480,7 +597,7 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
                     </IconButton>
                   )}
                 </AccordionSummary>
-                <AccordionDetails sx={{ px: 1.5, pt: 0, pb: 1.5 }}>
+                <AccordionDetails className="card-hover-reveal" sx={{ px: 1.5, pt: 0, pb: 1.5 }}>
                   <SortableContext items={categoryTasks.map((t) => t.id)} strategy={verticalListSortingStrategy}>
                     {categoryTasks.length === 0 ? (
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', py: 2 }}>
@@ -526,14 +643,15 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
       {/* Floating Action Button */}
       <Fab
         color="primary"
-        aria-label="add task"
+        aria-label="Add task"
         onClick={onAddTask}
         sx={{
           position: 'fixed',
-          bottom: 80,
+          bottom: 'calc(80px + env(safe-area-inset-bottom))',
           right: 16,
           zIndex: 1000,
           backgroundColor: THEME.accent,
+          color: THEME.onAccent,
           '&:hover': { backgroundColor: THEME.accentHover },
         }}
       >
@@ -547,11 +665,13 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
     <DndContext
       sensors={sensors}
       collisionDetection={closestCorners}
+      accessibility={dndAccessibility}
       onDragStart={handleDragStart}
       onDragOver={handleDragOver}
       onDragEnd={handleDragEnd}
     >
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+        {renderEmptyGuide()}
         {/* Edit mode toolbar */}
         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', px: 2, pt: 1.5, pb: 0.5 }}>
           <Button
@@ -577,6 +697,7 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
         </Box>
 
         <Box
+          className="category-hover-reveal"
           sx={{
             display: 'flex',
             gap: 2,
@@ -617,7 +738,7 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
       {/* Floating Action Button */}
       <Fab
         color="primary"
-        aria-label="add task"
+        aria-label="Add task"
         onClick={onAddTask}
         sx={{
           position: 'fixed',
@@ -625,6 +746,7 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
           right: 24,
           zIndex: 1000,
           backgroundColor: THEME.accent,
+          color: THEME.onAccent,
           '&:hover': { backgroundColor: THEME.accentHover },
         }}
       >
@@ -645,5 +767,53 @@ export default function KanbanBoard({ filteredTasks, onTaskClick, onAddTask }) {
     </DndContext>
   );
 
-  return isMobile ? renderMobileAccordion() : renderDesktopColumns();
+  const pendingCategoryTaskCount = pendingCategory
+    ? tasks.filter((task) => task.category === pendingCategory).length
+    : 0;
+
+  return (
+    <>
+      {isMobile ? renderMobileAccordion() : renderDesktopColumns()}
+      <Dialog
+        open={!!pendingCategory}
+        onClose={() => setPendingCategory(null)}
+        aria-labelledby="delete-column-title"
+      >
+        <DialogTitle id="delete-column-title">Remove “{pendingCategory}” category?</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ color: THEME.textSecondary }}>
+            {pendingCategoryTaskCount > 0
+              ? `${pendingCategoryTaskCount} ${pendingCategoryTaskCount === 1 ? 'task' : 'tasks'} must move before this category is removed.`
+              : 'This removes the empty category from this device.'}
+          </DialogContentText>
+          {pendingCategoryTaskCount > 0 && (
+            <FormControl fullWidth size="small" sx={{ mt: 2 }}>
+              <InputLabel id="move-tasks-label">Move tasks to</InputLabel>
+              <Select
+                labelId="move-tasks-label"
+                value={moveTarget}
+                label="Move tasks to"
+                onChange={(event) => setMoveTarget(event.target.value)}
+              >
+                {categories.filter((category) => category !== pendingCategory).map((category) => (
+                  <MenuItem key={category} value={category}>{category}</MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setPendingCategory(null)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={confirmDeleteColumn}
+            disabled={pendingCategoryTaskCount > 0 && !moveTarget}
+            sx={{ backgroundColor: THEME.error, color: THEME.onAccent, '&:hover': { backgroundColor: THEME.errorHover } }}
+          >
+            Remove category
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
+  );
 }

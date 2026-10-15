@@ -7,6 +7,7 @@ import {
   Chip,
   IconButton,
   Button,
+  ButtonBase,
 } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -48,12 +49,16 @@ function JournalMonthlyOverview({ onDateSelect }) {
     const dateStr = viewMonth.date(d).format('YYYY-MM-DD');
     const highlighted = hasEntry(dateStr);
     cells.push(
-      <Box
+      <ButtonBase
         key={d}
+        className="calendar-day"
         onClick={() => onDateSelect(dateStr)}
+        aria-label={`${highlighted ? 'Open journal entry for' : 'Open'} ${viewMonth.date(d).format('MMMM D, YYYY')}`}
         sx={{
-          width: 28,
-          height: 28,
+          width: '100%',
+          minWidth: 0,
+          minHeight: 44,
+          height: 44,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -61,7 +66,7 @@ function JournalMonthlyOverview({ onDateSelect }) {
           cursor: 'pointer',
           fontSize: '0.72rem',
           fontWeight: highlighted ? 600 : 400,
-          color: highlighted ? '#fff' : THEME.textSecondary,
+          color: highlighted ? THEME.onAccent : THEME.textSecondary,
           backgroundColor: highlighted ? THEME.accent : 'transparent',
           '&:hover': {
             backgroundColor: highlighted ? THEME.accentHover : THEME.surfaceHover,
@@ -69,7 +74,7 @@ function JournalMonthlyOverview({ onDateSelect }) {
         }}
       >
         {d}
-      </Box>
+      </ButtonBase>
     );
   }
 
@@ -77,13 +82,13 @@ function JournalMonthlyOverview({ onDateSelect }) {
     <Box sx={{ flex: 1, overflow: 'auto', p: 2 }}>
       {/* Month navigation */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5 }}>
-        <IconButton size="small" onClick={prevMonth} sx={{ color: THEME.textSecondary }}>
+        <IconButton size="small" onClick={prevMonth} aria-label="Previous month" sx={{ color: THEME.textSecondary }}>
           <ChevronLeftIcon fontSize="small" />
         </IconButton>
         <Typography variant="subtitle2" sx={{ fontWeight: 600, color: THEME.text, fontSize: '0.85rem' }}>
           {viewMonth.format('MMMM YYYY')}
         </Typography>
-        <IconButton size="small" onClick={nextMonth} sx={{ color: THEME.textSecondary }}>
+        <IconButton size="small" onClick={nextMonth} aria-label="Next month" sx={{ color: THEME.textSecondary }}>
           <ChevronRightIcon fontSize="small" />
         </IconButton>
       </Box>
@@ -102,7 +107,7 @@ function JournalMonthlyOverview({ onDateSelect }) {
               textTransform: 'uppercase',
             }}
           >
-            {h}
+            {h.charAt(0)}
           </Typography>
         ))}
       </Box>
@@ -135,13 +140,13 @@ function JournalPeopleSection({ onDateSelect }) {
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
         <PeopleIcon sx={{ color: THEME.textMuted, fontSize: '1.1rem' }} />
         <Typography variant="subtitle2" sx={{ fontWeight: 600, color: THEME.text, fontSize: '0.85rem' }}>
-          People
+          People mentioned
         </Typography>
       </Box>
 
       {allPeople.length === 0 && (
         <Typography variant="body2" sx={{ color: THEME.textMuted, fontSize: '0.8rem' }}>
-          No people logged yet.
+          No one mentioned in an entry yet.
         </Typography>
       )}
 
@@ -171,12 +176,13 @@ function JournalPeopleSection({ onDateSelect }) {
               {isExpanded && dates.length > 0 && (
                 <Box sx={{ pl: 2, pt: 0.5, pb: 0.5 }}>
                   {dates.map((date) => (
-                    <Typography
+                    <ButtonBase
                       key={date}
-                      variant="caption"
                       onClick={() => onDateSelect(date)}
                       sx={{
                         display: 'block',
+                        width: '100%',
+                        justifyContent: 'flex-start',
                         color: THEME.blue,
                         cursor: 'pointer',
                         py: 0.25,
@@ -188,7 +194,7 @@ function JournalPeopleSection({ onDateSelect }) {
                       }}
                     >
                       {dayjs(date).format('MMM D, YYYY (ddd)')}
-                    </Typography>
+                    </ButtonBase>
                   ))}
                 </Box>
               )}
@@ -205,14 +211,16 @@ function JournalPeopleSection({ onDateSelect }) {
 /* -------------------------------------------------------------------------- */
 
 export default function JournalView({ initialDate }) {
-  const { getEntry, saveEntry, getAllPeople } = useJournalContext();
+  const { getEntry, saveEntry, getAllPeople, storageError, lastSavedAt } = useJournalContext();
   const [currentDate, setCurrentDate] = useState(
     initialDate ? dayjs(initialDate) : dayjs()
   );
   const [dump, setDump] = useState('');
   const [people, setPeople] = useState([]);
   const [peopleInput, setPeopleInput] = useState('');
+  const [saveStatus, setSaveStatus] = useState('saved');
   const saveTimerRef = useRef(null);
+  const pendingSaveRef = useRef(null);
 
   const dateStr = currentDate.format('YYYY-MM-DD');
   const allPeople = getAllPeople();
@@ -222,6 +230,7 @@ export default function JournalView({ initialDate }) {
     const entry = getEntry(dateStr);
     setDump(entry.dump);
     setPeople(entry.people);
+    setSaveStatus('saved');
   }, [dateStr, getEntry]);
 
   // Update date if initialDate prop changes (from calendar zoom)
@@ -234,17 +243,33 @@ export default function JournalView({ initialDate }) {
   // Auto-save with debounce
   const scheduleSave = useCallback((newDump, newPeople) => {
     if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    pendingSaveRef.current = { date: dateStr, dump: newDump, people: newPeople };
+    setSaveStatus('saving');
     saveTimerRef.current = setTimeout(() => {
       saveEntry(dateStr, { dump: newDump, people: newPeople });
+      pendingSaveRef.current = null;
     }, 500);
   }, [dateStr, saveEntry]);
+
+  useEffect(() => {
+    if (storageError) {
+      setSaveStatus('error');
+    } else if (lastSavedAt) {
+      setSaveStatus('saved');
+    }
+  }, [storageError, lastSavedAt]);
 
   // Cleanup timer on unmount
   useEffect(() => {
     return () => {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+      const pending = pendingSaveRef.current;
+      if (pending) {
+        saveEntry(pending.date, { dump: pending.dump, people: pending.people });
+        pendingSaveRef.current = null;
+      }
     };
-  }, []);
+  }, [saveEntry]);
 
   const handleDumpChange = (e) => {
     const val = e.target.value;
@@ -272,11 +297,11 @@ export default function JournalView({ initialDate }) {
       {/* Left Panel — Daily Entry */}
       <Box sx={{ overflow: { xs: 'visible', md: 'auto' }, maxWidth: 720 }}>
         {/* Date navigation */}
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1.5, mb: 3 }}>
-          <IconButton onClick={navigateBack} size="small" sx={{ color: THEME.textSecondary }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1, mb: 3, flexWrap: 'wrap' }}>
+          <IconButton onClick={navigateBack} size="small" aria-label="Previous day" sx={{ color: THEME.textSecondary }}>
             <ChevronLeftIcon />
           </IconButton>
-          <Box sx={{ textAlign: 'center', minWidth: 180 }}>
+          <Box sx={{ textAlign: 'center', minWidth: { xs: 140, sm: 180 } }}>
             <Typography variant="h5" sx={{ fontWeight: 600, color: THEME.text, lineHeight: 1.2 }}>
               {currentDate.format('dddd')}
             </Typography>
@@ -284,7 +309,7 @@ export default function JournalView({ initialDate }) {
               {currentDate.format('MMMM D, YYYY')}
             </Typography>
           </Box>
-          <IconButton onClick={navigateForward} size="small" sx={{ color: THEME.textSecondary }}>
+          <IconButton onClick={navigateForward} size="small" aria-label="Next day" sx={{ color: THEME.textSecondary }}>
             <ChevronRightIcon />
           </IconButton>
           {!isToday && (
@@ -320,12 +345,12 @@ export default function JournalView({ initialDate }) {
               mb: 1,
             }}
           >
-            Dump
+            Daily notes
           </Typography>
           <TextField
             value={dump}
             onChange={handleDumpChange}
-            placeholder="Brain dump, thoughts, reflections..."
+            placeholder="Thoughts, reflections, and anything worth remembering..."
             multiline
             minRows={6}
             maxRows={16}
@@ -338,6 +363,27 @@ export default function JournalView({ initialDate }) {
               },
             }}
           />
+          <Typography
+            role="status"
+            aria-live="polite"
+            variant="caption"
+            sx={{
+              display: 'block',
+              mt: 0.75,
+              color: saveStatus === 'error'
+                ? THEME.error
+                : saveStatus === 'saving'
+                  ? THEME.textMuted
+                  : THEME.green,
+              fontSize: '0.72rem',
+            }}
+          >
+            {saveStatus === 'error'
+              ? 'Could not save this entry on this device.'
+              : saveStatus === 'saving'
+                ? 'Saving locally…'
+                : 'Saved locally on this device'}
+          </Typography>
         </Box>
 
         {/* People autocomplete */}
@@ -353,7 +399,7 @@ export default function JournalView({ initialDate }) {
               mb: 1,
             }}
           >
-            People
+            People in this entry
           </Typography>
           <Autocomplete
             multiple
@@ -385,7 +431,7 @@ export default function JournalView({ initialDate }) {
             renderInput={(params) => (
               <TextField
                 {...params}
-                placeholder={people.length === 0 ? 'Add people you interacted with...' : 'Add more...'}
+                placeholder={people.length === 0 ? 'Add someone from today…' : 'Add another person…'}
                 size="small"
                 sx={{
                   '& .MuiOutlinedInput-root': {

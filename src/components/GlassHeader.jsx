@@ -4,7 +4,7 @@ import { VIEWS, THEME } from '../constants';
 
 const VIEW_TITLES = {
   [VIEWS.KANBAN]: 'Board',
-  [VIEWS.LIST]: 'List',
+  [VIEWS.LIST]: 'Logbook',
   [VIEWS.CALENDAR]: 'Calendar',
   [VIEWS.STATS]: 'Statistics',
   [VIEWS.HABITS]: 'Habits',
@@ -13,16 +13,22 @@ const VIEW_TITLES = {
 };
 
 const VIEW_SUBTITLES = {
-  [VIEWS.KANBAN]: 'Drag and drop to organize tasks',
-  [VIEWS.LIST]: 'All tasks in one place',
-  [VIEWS.CALENDAR]: 'Plan your schedule',
-  [VIEWS.STATS]: 'Track your productivity',
+  [VIEWS.KANBAN]: 'Organize what needs your attention',
+  [VIEWS.LIST]: 'Keep a dated record of finished work',
+  [VIEWS.CALENDAR]: 'See tasks by due date',
+  [VIEWS.STATS]: 'See task and journal progress',
   [VIEWS.HABITS]: 'Build consistent routines',
-  [VIEWS.JOURNAL]: 'Reflect on your day',
-  [VIEWS.FINANCE]: 'Track your money',
+  [VIEWS.JOURNAL]: 'Write down what mattered today',
+  [VIEWS.FINANCE]: 'Track income and expenses',
 };
 
+const TASK_VIEWS = new Set([VIEWS.KANBAN, VIEWS.LIST, VIEWS.CALENDAR]);
+const TASK_ACTION_VIEWS = new Set([VIEWS.LIST, VIEWS.CALENDAR]);
+
 export default function GlassHeader({ currentView, taskCount, onAddTask }) {
+  const showTaskCount = TASK_VIEWS.has(currentView) && taskCount > 0;
+  const showAddTask = TASK_ACTION_VIEWS.has(currentView);
+
   return (
     <Box
       sx={{
@@ -39,6 +45,7 @@ export default function GlassHeader({ currentView, taskCount, onAddTask }) {
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Typography
             variant="h4"
+            component="h1"
             sx={{
               fontWeight: 600,
               letterSpacing: '-0.02em',
@@ -48,7 +55,7 @@ export default function GlassHeader({ currentView, taskCount, onAddTask }) {
           >
             {VIEW_TITLES[currentView]}
           </Typography>
-          {taskCount > 0 && (
+          {showTaskCount && (
             <Box
               sx={{
                 px: 1.25,
@@ -59,7 +66,7 @@ export default function GlassHeader({ currentView, taskCount, onAddTask }) {
               }}
             >
               <Typography variant="caption" sx={{ color: THEME.accent, fontWeight: 600, fontSize: '0.72rem' }}>
-                {taskCount}
+                {taskCount} active
               </Typography>
             </Box>
           )}
@@ -72,15 +79,16 @@ export default function GlassHeader({ currentView, taskCount, onAddTask }) {
         </Typography>
       </Box>
 
-      {currentView !== VIEWS.STATS && currentView !== VIEWS.KANBAN && currentView !== VIEWS.FINANCE && (
-        <Tooltip title="Add new task">
+      {showAddTask && (
+        <Tooltip title="Add task">
           <IconButton
             onClick={onAddTask}
+            aria-label="Add task"
             sx={{
-              width: 42,
-              height: 42,
+              width: 44,
+              height: 44,
               backgroundColor: THEME.accent,
-              color: '#fff',
+              color: THEME.onAccent,
               borderRadius: 2.5,
               '&:hover': {
                 backgroundColor: THEME.accentHover,

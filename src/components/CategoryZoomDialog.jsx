@@ -31,8 +31,8 @@ export default function CategoryZoomDialog({
   const color = getCategoryColor(category, categories);
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
-      <DialogTitle>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth aria-labelledby="category-zoom-title">
+      <DialogTitle id="category-zoom-title">
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
           <Box
             sx={{
@@ -43,6 +43,7 @@ export default function CategoryZoomDialog({
             }}
           />
           <Typography
+            component="span"
             variant="h6"
             sx={{ fontWeight: 600, color: THEME.text }}
           >
@@ -79,26 +80,33 @@ export default function CategoryZoomDialog({
                     edge="start"
                     checked={task.completed}
                     onChange={() => onToggleComplete(task.id)}
+                    aria-label={`${task.completed ? 'Mark incomplete' : 'Mark complete'}: ${task.title}`}
                     sx={{
                       color: THEME.textMuted,
                       '&.Mui-checked': { color: THEME.accent },
                     }}
                   />
                 </ListItemIcon>
-                <ListItemButton onClick={() => onTaskClick(task)} sx={{ py: 1.5 }}>
+                <ListItemButton
+                  onClick={() => onTaskClick(task)}
+                  aria-label={`Open task ${task.title}`}
+                  sx={{ py: 1.5 }}
+                >
                   <ListItemText
                     primary={task.title}
-                    primaryTypographyProps={{
-                      sx: {
-                        color: task.completed ? THEME.textMuted : THEME.text,
-                        textDecoration: task.completed ? 'line-through' : 'none',
-                        fontSize: '0.9rem',
+                    slotProps={{
+                      primary: {
+                        sx: {
+                          color: task.completed ? THEME.textMuted : THEME.text,
+                          textDecoration: task.completed ? 'line-through' : 'none',
+                          fontSize: '0.9rem',
+                        },
+                      },
+                      secondary: {
+                        sx: { color: THEME.textMuted, fontSize: '0.75rem' },
                       },
                     }}
                     secondary={task.dueDate ? `Due: ${new Date(task.dueDate).toLocaleDateString()}` : null}
-                    secondaryTypographyProps={{
-                      sx: { color: THEME.textMuted, fontSize: '0.75rem' },
-                    }}
                   />
                 </ListItemButton>
               </ListItem>
@@ -119,7 +127,7 @@ export default function CategoryZoomDialog({
             fontWeight: 500,
           }}
         >
-          Add Task
+          Add task
         </Button>
         <Box sx={{ flex: 1 }} />
         <Button onClick={onClose} sx={{ color: THEME.textSecondary, textTransform: 'none' }}>

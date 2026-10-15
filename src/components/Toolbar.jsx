@@ -9,6 +9,7 @@ import {
   Switch,
   InputAdornment,
   Typography,
+  Button,
 } from '@mui/material';
 import SearchIcon from '@mui/icons-material/Search';
 import { PRIORITIES, THEME } from '../constants';
@@ -27,6 +28,8 @@ export default function Toolbar({
   onShowCompletedChange,
   currentView,
   onViewChange,
+  filtersActive,
+  onClearFilters,
 }) {
   return (
     <Box
@@ -54,12 +57,15 @@ export default function Toolbar({
             backgroundColor: THEME.surface,
           },
         }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <SearchIcon fontSize="small" sx={{ color: THEME.textMuted }} />
-            </InputAdornment>
-          ),
+        slotProps={{
+          htmlInput: { 'aria-label': 'Search tasks' },
+          input: {
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" sx={{ color: THEME.textMuted }} />
+              </InputAdornment>
+            ),
+          },
         }}
       />
       <FormControl size="small" sx={{ minWidth: { xs: 90, sm: 110 }, flex: { xs: '1 1 auto', sm: '0 1 auto' } }}>
@@ -103,11 +109,16 @@ export default function Toolbar({
         }
         label={
           <Typography variant="caption" sx={{ color: THEME.textSecondary, fontSize: '0.78rem' }}>
-            Completed
+            Show completed
           </Typography>
         }
         sx={{ mx: 0 }}
       />
+      {filtersActive && (
+        <Button onClick={onClearFilters} sx={{ color: THEME.textSecondary, fontSize: '0.78rem' }}>
+          Clear filters
+        </Button>
+      )}
       {/* ViewSwitcher hidden on mobile — bottom nav handles view switching */}
       <Box sx={{ ml: 'auto', display: { xs: 'none', md: 'block' } }}>
         <ViewSwitcher currentView={currentView} onViewChange={onViewChange} />

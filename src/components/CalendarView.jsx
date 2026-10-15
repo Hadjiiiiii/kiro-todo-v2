@@ -7,7 +7,12 @@ import {
   ToggleButton,
   Chip,
   Button,
-  Paper,
+  ButtonBase,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  useMediaQuery,
 } from '@mui/material';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
@@ -17,7 +22,7 @@ import dayjs from 'dayjs';
 import isSameOrAfter from 'dayjs/plugin/isSameOrAfter';
 import isSameOrBefore from 'dayjs/plugin/isSameOrBefore';
 import weekOfYear from 'dayjs/plugin/weekOfYear';
-import { PRIORITY_COLORS, THEME } from '../constants';
+import { THEME } from '../constants';
 
 dayjs.extend(isSameOrAfter);
 dayjs.extend(isSameOrBefore);
@@ -69,6 +74,8 @@ export default function CalendarView({ filteredTasks, onTaskClick, onOpenJournal
 
   const days = viewMode === 'week' ? getWeekDays() : getMonthDays();
   const today = dayjs();
+  const isNarrow = useMediaQuery('(max-width:767px)');
+  const showDayTitles = viewMode === 'week' || !isNarrow;
 
   const headerText =
     viewMode === 'week'
@@ -80,7 +87,7 @@ export default function CalendarView({ filteredTasks, onTaskClick, onOpenJournal
       {/* Calendar header */}
       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2, flexWrap: 'wrap', gap: 1 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: { xs: 0.5, md: 1 } }}>
-          <IconButton onClick={navigateBack} size="small" sx={{ color: THEME.textSecondary }}>
+          <IconButton onClick={navigateBack} size="small" aria-label={`Previous ${viewMode}`} sx={{ color: THEME.textSecondary }}>
             <ChevronLeftIcon />
           </IconButton>
           <Typography
@@ -89,7 +96,7 @@ export default function CalendarView({ filteredTasks, onTaskClick, onOpenJournal
           >
             {headerText}
           </Typography>
-          <IconButton onClick={navigateForward} size="small" sx={{ color: THEME.textSecondary }}>
+          <IconButton onClick={navigateForward} size="small" aria-label={`Next ${viewMode}`} sx={{ color: THEME.textSecondary }}>
             <ChevronRightIcon />
           </IconButton>
           <Chip
@@ -97,7 +104,7 @@ export default function CalendarView({ filteredTasks, onTaskClick, onOpenJournal
             size="small"
             onClick={goToToday}
             sx={{
-              height: 24,
+              height: 32,
               fontSize: '0.7rem',
               ml: { xs: 0.5, md: 1 },
               backgroundColor: THEME.accentSoft,
@@ -161,13 +168,15 @@ export default function CalendarView({ filteredTasks, onTaskClick, onOpenJournal
               py: 0.5,
             }}
           >
-            {d}
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>{d}</Box>
+            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>{d.charAt(0)}</Box>
           </Typography>
         ))}
       </Box>
 
       {/* Calendar grid */}
       <Box
+        className="card-hover-reveal"
         sx={{
           display: 'grid',
           gridTemplateColumns: 'repeat(7, 1fr)',
@@ -182,14 +191,22 @@ export default function CalendarView({ filteredTasks, onTaskClick, onOpenJournal
           const isCurrentMonth = day.month() === currentDate.month();
 
           return (
-            <Box
+            <ButtonBase
               key={day.format('YYYY-MM-DD')}
+              className="calendar-day card-reveal"
               onClick={() => setSelectedDay(day)}
+              aria-label={`Open ${day.format('MMMM D, YYYY')}, ${dayTasks.length} ${dayTasks.length === 1 ? 'task' : 'tasks'} due`}
               sx={{
-                minHeight: viewMode === 'week' ? { xs: 80, md: 120 } : { xs: 56, md: 80 },
+                minHeight: viewMode === 'week' ? { xs: 88, md: 120 } : { xs: 56, md: 80 },
+                width: '100%',
+                minWidth: 0,
                 borderRadius: 2,
                 p: { xs: 0.5, md: 0.75 },
-                cursor: 'pointer',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'stretch',
+                justifyContent: 'flex-start',
+                textAlign: 'left',
                 backgroundColor: isToday ? THEME.accentSoft : THEME.surface,
                 border: isToday
                   ? `1px solid ${THEME.accentSoftBorder}`
@@ -210,167 +227,137 @@ export default function CalendarView({ filteredTasks, onTaskClick, onOpenJournal
               >
                 {day.format('D')}
               </Typography>
-              {dayTasks.slice(0, viewMode === 'week' ? 5 : 3).map((task) => (
-                <Box
-                  key={task.id}
-                  onClick={() => onTaskClick(task)}
-                  sx={{
-                    px: 0.5,
-                    py: 0.25,
-                    mb: 0.25,
-                    borderRadius: 0.75,
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                    borderLeft: `2px solid ${PRIORITY_COLORS[task.priority]}`,
-                    cursor: 'pointer',
-                    '&:hover': {
-                      backgroundColor: 'rgba(255, 255, 255, 0.09)',
-                    },
-                    overflow: 'hidden',
-                  }}
-                >
+              {showDayTitles ? (
+                <>
+                  {dayTasks.slice(0, viewMode === 'week' ? 5 : 3).map((task) => (
+                    <Box
+                      key={task.id}
+                      sx={{
+                        px: 0.5,
+                        py: 0.25,
+                        mb: 0.25,
+                        borderRadius: 0.75,
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontSize: '0.6rem',
+                          color: task.completed ? THEME.textMuted : THEME.textSecondary,
+                          textDecoration: task.completed ? 'line-through' : 'none',
+                          whiteSpace: 'nowrap',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: 'block',
+                        }}
+                      >
+                        {task.title}
+                      </Typography>
+                    </Box>
+                  ))}
+                  {dayTasks.length > (viewMode === 'week' ? 5 : 3) && (
+                    <Typography
+                      variant="caption"
+                      sx={{ fontSize: '0.65rem', color: THEME.textMuted, px: 0.5 }}
+                    >
+                      +{dayTasks.length - (viewMode === 'week' ? 5 : 3)} more
+                    </Typography>
+                  )}
+                </>
+              ) : (
+                dayTasks.length > 0 && (
                   <Typography
                     variant="caption"
-                    sx={{
-                      fontSize: '0.6rem',
-                      color: task.completed ? THEME.textMuted : THEME.textSecondary,
-                      textDecoration: task.completed ? 'line-through' : 'none',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: 'block',
-                    }}
+                    sx={{ fontSize: '0.65rem', color: THEME.textSecondary, fontWeight: 600 }}
                   >
-                    {task.title}
+                    {dayTasks.length}
                   </Typography>
-                </Box>
-              ))}
-              {dayTasks.length > (viewMode === 'week' ? 5 : 3) && (
-                <Typography
-                  variant="caption"
-                  sx={{ fontSize: '0.55rem', color: THEME.textMuted, px: 0.5 }}
-                >
-                  +{dayTasks.length - (viewMode === 'week' ? 5 : 3)} more
-                </Typography>
+                )
               )}
-            </Box>
+            </ButtonBase>
           );
         })}
       </Box>
 
-      {/* Day Zoom Panel */}
-      {selectedDay && (
-        <Paper
-          sx={{
-            position: 'absolute',
-            top: '50%',
-            left: '50%',
-            transform: 'translate(-50%, -50%)',
-            width: '90%',
-            maxWidth: 480,
-            maxHeight: '70vh',
-            overflow: 'auto',
-            p: 3,
-            borderRadius: 4,
-            backgroundColor: THEME.elevated,
-            border: `1px solid ${THEME.borderStrong}`,
-            boxShadow: THEME.shadow,
-            zIndex: 10,
-          }}
-          elevation={0}
-        >
-          {/* Header */}
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-            <Box>
-              <Typography variant="h5" sx={{ fontWeight: 600, color: THEME.text }}>
+      <Dialog
+        open={!!selectedDay}
+        onClose={() => setSelectedDay(null)}
+        fullWidth
+        maxWidth="sm"
+        aria-labelledby="calendar-day-title"
+        slotProps={{
+          paper: {
+            sx: { m: { xs: 1, sm: 3 }, width: { xs: 'calc(100% - 16px)', sm: 'auto' } },
+          },
+        }}
+      >
+        {selectedDay && (
+          <>
+            <DialogTitle id="calendar-day-title" sx={{ pr: 7 }}>
+              <Typography variant="h5" component="span" sx={{ fontWeight: 600, color: THEME.text }}>
                 {selectedDay.format('dddd')}
               </Typography>
               <Typography variant="body2" sx={{ color: THEME.textSecondary }}>
                 {selectedDay.format('MMMM D, YYYY')}
               </Typography>
-            </Box>
-            <IconButton onClick={() => setSelectedDay(null)} size="small" sx={{ color: THEME.textMuted }}>
-              <CloseIcon />
-            </IconButton>
-          </Box>
-
-          {/* Tasks for this day */}
-          <Typography variant="caption" sx={{ color: THEME.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.65rem', mb: 1, display: 'block' }}>
-            Tasks
-          </Typography>
-          {(() => {
-            const dayTasks = getTasksForDay(selectedDay);
-            if (dayTasks.length === 0) {
-              return (
-                <Typography variant="body2" sx={{ color: THEME.textMuted, mb: 2, fontSize: '0.85rem' }}>
-                  No tasks for this day
+              <IconButton
+                onClick={() => setSelectedDay(null)}
+                aria-label="Close day details"
+                size="small"
+                sx={{ color: THEME.textMuted, position: 'absolute', top: 16, right: 16 }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </DialogTitle>
+            <DialogContent>
+              <Typography variant="caption" sx={{ color: THEME.textMuted, textTransform: 'uppercase', letterSpacing: '0.08em', fontSize: '0.65rem', mb: 1, display: 'block' }}>
+                Tasks due
+              </Typography>
+              {getTasksForDay(selectedDay).length === 0 ? (
+                <Typography variant="body2" sx={{ color: THEME.textMuted, py: 1, fontSize: '0.85rem' }}>
+                  No tasks due this day.
                 </Typography>
-              );
-            }
-            return (
-              <Box sx={{ mb: 2 }}>
-                {dayTasks.map((task) => (
-                  <Box
-                    key={task.id}
-                    onClick={() => { setSelectedDay(null); onTaskClick(task); }}
-                    sx={{
-                      px: 1.5,
-                      py: 1,
-                      mb: 0.5,
-                      borderRadius: 2,
-                      cursor: 'pointer',
-                      backgroundColor: THEME.surface,
-                      border: `1px solid ${THEME.border}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      '&:hover': { borderColor: THEME.borderStrong },
-                    }}
-                  >
-                    <Box sx={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: PRIORITY_COLORS[task.priority] }} />
-                    <Typography variant="body2" sx={{ fontSize: '0.85rem', color: task.completed ? THEME.textMuted : THEME.text, textDecoration: task.completed ? 'line-through' : 'none' }}>
+              ) : (
+                <Box>
+                  {getTasksForDay(selectedDay).map((task) => (
+                    <Button
+                      key={task.id}
+                      onClick={() => { setSelectedDay(null); onTaskClick(task); }}
+                      fullWidth
+                      sx={{
+                        justifyContent: 'flex-start',
+                        px: 1.5,
+                        py: 1,
+                        mb: 0.5,
+                        color: task.completed ? THEME.textMuted : THEME.text,
+                        textDecoration: task.completed ? 'line-through' : 'none',
+                        backgroundColor: THEME.surface,
+                        border: `1px solid ${THEME.border}`,
+                        '&:hover': { borderColor: THEME.borderStrong, backgroundColor: THEME.surfaceHover },
+                      }}
+                    >
                       {task.title}
-                    </Typography>
-                  </Box>
-                ))}
-              </Box>
-            );
-          })()}
-
-          {/* Journal button */}
-          <Button
-            startIcon={<MenuBookIcon />}
-            onClick={() => {
-              setSelectedDay(null);
-              onOpenJournal(selectedDay.format('YYYY-MM-DD'));
-            }}
-            fullWidth
-            sx={{
-              mt: 1,
-              color: THEME.accent,
-              border: `1px solid ${THEME.accentSoftBorder}`,
-              borderRadius: 2.5,
-              textTransform: 'none',
-              py: 1,
-              '&:hover': { backgroundColor: THEME.accentSoft },
-            }}
-          >
-            Open Journal for {selectedDay.format('MMM D')}
-          </Button>
-        </Paper>
-      )}
-
-      {/* Backdrop when zoom is open */}
-      {selectedDay && (
-        <Box
-          onClick={() => setSelectedDay(null)}
-          sx={{
-            position: 'absolute',
-            inset: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            zIndex: 5,
-          }}
-        />
-      )}
+                    </Button>
+                  ))}
+                </Box>
+              )}
+            </DialogContent>
+            <DialogActions sx={{ px: 3, pb: 2.5 }}>
+              <Button
+                startIcon={<MenuBookIcon />}
+                onClick={() => {
+                  setSelectedDay(null);
+                  onOpenJournal(selectedDay.format('YYYY-MM-DD'));
+                }}
+              >
+                Open journal for {selectedDay.format('MMM D')}
+              </Button>
+            </DialogActions>
+          </>
+        )}
+      </Dialog>
     </Box>
   );
 }
