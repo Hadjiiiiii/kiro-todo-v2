@@ -19,10 +19,10 @@ Seam under test: `README.md`, through the existing `documentation.test.js`.
 Done when: `npm run test:run` passes and the GitHub-rendered README shows the GIF above the fold.
 
 ## T3 ⬜ Push to GitHub (~20 min)
-- [ ] 1. Secret check: `git status` and `git ls-files | grep -Ei 'env|log'` show only `.env.example`. (`.env.local` and `firestore-debug.log` are already covered by `*.local` and `*.log` in `.gitignore`.)
-- [ ] 2. Tidy root: move `task-6-report.md` into `docs/`. Drop `dist/` from the tree if it's tracked.
-- [ ] 3. `npm run test:run && npm run build`, both green. Squash the `wip(T*)` commits into clean ones.
-- [ ] 4. `git push -u origin main`.
+- [x] 1. Secret check: `git status` and `git ls-files | grep -Ei 'env|log'` show only `.env.example`. (`.env.local` and `firestore-debug.log` are already covered by `*.local` and `*.log` in `.gitignore`.)
+- [x] 2. Tidy root: move `task-6-report.md` into `docs/`. Drop `dist/` from the tree if it's tracked.
+- [x] 3. `npm run test:run && npm run build`, both green. Squash the `wip(T*)` commits into clean ones.
+- [x] 4. `git push -u origin main`.
 - [ ] 5. 🧑 On GitHub: set the repo **Website** to the Vercel URL, add a description and topics (`react`, `firebase`, `vite`, `productivity`). Leave public/private as it is until Day 6 pinning.
 Done when: the push triggers a Vercel deploy; on the Vercel URL in a private window: sign up → verify → sign in → add a task → refresh and it's still there; a second account can't see it. GitHub repo Website field points to the Vercel URL.
 
