@@ -1,13 +1,13 @@
 # TASKS
 Format: ≤1 h each, 3–6 steps, done-criteria. Status: ⬜ ready · 🔒 claimed (<tool>, <worktree>) · ✅ done
 
-## T1 ⬜ Ship the Firebase version on Vercel, test first (~40 min)
+## T1 ✅ Ship the Firebase version on Vercel, test first (~40 min)
 Seam under test: app startup with missing Firebase config (src/services/firebase.js and what main.jsx renders). Agree this seam before writing the test.
-- [ ] 1. **Red:** add a test that renders the app entry with no VITE_FIREBASE_* values and expects a readable "Firebase config missing, see README" message instead of a thrown error. Run `npm run test:run`, confirm it fails.
-- [ ] 2. **Green:** guard firebase.js so missing config is reported, not thrown on import; render the message. Test passes. Commit `wip(T1): step 2/5 config guard`.
-- [ ] 3. 🧑 Create `.env.local` from `.env.example` with your Firebase web values; `npm run dev` loads the login screen on localhost.
-- [ ] 4. 🧑 Vercel → Project → Settings → Environment Variables: add the four VITE_FIREBASE_* values (Production and Preview). Firebase → Authentication → Settings → Authorized domains: add the vercel.app domain. Set the verification email continue URL to the Vercel URL.
-- [ ] 5. `npx firebase login`, `npx firebase use <project>`, `npx firebase deploy --only firestore:rules`.
+- [x] 1. **Red:** add a test that renders the app entry with no VITE_FIREBASE_* values and expects a readable "Firebase config missing, see README" message instead of a thrown error. Run `npm run test:run`, confirm it fails.
+- [x] 2. **Green:** guard firebase.js so missing config is reported, not thrown on import; render the message. Test passes. Commit `wip(T1): step 2/5 config guard`.
+- [x] 3. 🧑 Create `.env.local` from `.env.example` with your Firebase web values; `npm run dev` loads the login screen on localhost.
+- [x] 4. 🧑 Vercel → Project → Settings → Environment Variables: add the four VITE_FIREBASE_* values (Production and Preview). Firebase → Authentication → Settings → Authorized domains: add the vercel.app domain. Set the verification email continue URL to the Vercel URL.
+- [x] 5. `npx firebase login`, `npx firebase use <project>`, `npx firebase deploy --only firestore:rules`.
 Done when: localhost shows the login screen, Vercel has the four variables, and the Firestore rules are deployed. (The live check happens after the push in T3.)
 
 ## T2 ⬜ README pitch + GIF (~40 min)
@@ -26,3 +26,7 @@ Done when: `npm run test:run` passes and the GitHub-rendered README shows the GI
 - [ ] 5. 🧑 On GitHub: set the repo **Website** to the Vercel URL, add a description and topics (`react`, `firebase`, `vite`, `productivity`). Leave public/private as it is until Day 6 pinning.
 Done when: the push triggers a Vercel deploy; on the Vercel URL in a private window: sign up → verify → sign in → add a task → refresh and it's still there; a second account can't see it. GitHub repo Website field points to the Vercel URL.
 
+Open notes (from T1):
+- Test user `sudais.h.amerol+taskeeptest@gmail.com` was created on localhost while debugging; delete it in Firebase → Authentication → Users.
+- Sign-up from the owner's own browser failed with `auth/network-request-failed` (works from a clean browser). Suspects: ProtonVPN NetShield, Edge tracking prevention. Resolve before the live check.
+- Firestore database location is `nam5` (US), fixed.

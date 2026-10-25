@@ -2,9 +2,11 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import CssBaseline from '@mui/material/CssBaseline';
+import { Box, Typography } from '@mui/material';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { AuthProvider } from './context/AuthContext.jsx';
+import { firebaseConfigured } from './services/firebase.js';
 import AuthGate from './components/AuthGate.jsx';
 import { THEME } from './constants';
 import './index.css';
@@ -202,9 +204,19 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <AuthProvider>
-          <AuthGate />
-        </AuthProvider>
+        {firebaseConfigured ? (
+          <AuthProvider>
+            <AuthGate />
+          </AuthProvider>
+        ) : (
+          <Box role="alert" sx={{ maxWidth: 520, mx: 'auto', mt: 10, p: 3, color: THEME.text }}>
+            <Typography variant="h5" sx={{ mb: 1 }}>Firebase configuration is missing</Typography>
+            <Typography>
+              TasKeep needs its VITE_FIREBASE_* values. Copy .env.example to .env.local, fill in your Firebase web app config,
+              and restart the dev server. See README → Local setup.
+            </Typography>
+          </Box>
+        )}
       </LocalizationProvider>
     </ThemeProvider>
   </React.StrictMode>

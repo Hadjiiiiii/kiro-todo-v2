@@ -9,17 +9,20 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
-const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
+// Without these values getAuth throws on import and the page stays blank, so report it instead.
+export const firebaseConfigured = Object.values(firebaseConfig).every(Boolean);
 
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+const app = firebaseConfigured ? (getApps().length ? getApp() : initializeApp(firebaseConfig)) : null;
 
-await setPersistence(auth, browserLocalPersistence);
+export const auth = app ? getAuth(app) : null;
+export const db = app ? getFirestore(app) : null;
+
+if (auth) await setPersistence(auth, browserLocalPersistence);
 
 let authEmulatorConnected = false;
 let firestoreEmulatorConnected = false;
 
-if (import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
+if (app && import.meta.env.DEV && import.meta.env.VITE_USE_FIREBASE_EMULATORS === 'true') {
   if (!authEmulatorConnected) {
     connectAuthEmulator(auth, 'http://127.0.0.1:9099', { disableWarnings: true });
     authEmulatorConnected = true;
