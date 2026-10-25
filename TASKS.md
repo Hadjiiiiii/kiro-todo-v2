@@ -1,14 +1,14 @@
 # TASKS
 Format: ≤1 h each, 3–6 steps, done-criteria. Status: ⬜ ready · 🔒 claimed (<tool>, <worktree>) · ✅ done
 
-## T1 ⬜ Deploy to Firebase Hosting, test first (~40 min)
-Seam under test: the `firebase.json` hosting config (the public contract the deploy reads). Agree this seam before writing the test.
-- [ ] 1. **Red:** add a test (e.g. `src/test/hosting.config.test.js`) that reads `firebase.json` and expects `hosting.public === "dist"` and a `**` → `/index.html` rewrite. Run `npm run test:run`, confirm it fails.
-- [ ] 2. **Green:** add the `hosting` block to `firebase.json` (`public: "dist"`, `ignore` firebase.json/dotfiles/node_modules, SPA rewrite). Test passes. Commit `wip(T1): step 2/5 hosting config`.
-- [ ] 3. 🧑 In Firebase Console, check your real `.env.local` values exist, then `npx firebase login` and `npx firebase use <project>`.
-- [ ] 4. `npm run build && npx firebase deploy --only hosting,firestore:rules`. Copy the `https://<project>.web.app` URL.
-- [ ] 5. 🧑 Add `<project>.web.app` and `<project>.firebaseapp.com` to **Authentication → Settings → Authorized domains**, and set the verification email continue URL to the live URL.
-Done when, on the live URL in a private window: sign up → verification email arrives → sign in → add a task → refresh and it's still there. Second account can't see the first account's task.
+## T1 ⬜ Ship the Firebase version on Vercel, test first (~40 min)
+Seam under test: app startup with missing Firebase config (src/services/firebase.js and what main.jsx renders). Agree this seam before writing the test.
+- [ ] 1. **Red:** add a test that renders the app entry with no VITE_FIREBASE_* values and expects a readable "Firebase config missing, see README" message instead of a thrown error. Run `npm run test:run`, confirm it fails.
+- [ ] 2. **Green:** guard firebase.js so missing config is reported, not thrown on import; render the message. Test passes. Commit `wip(T1): step 2/5 config guard`.
+- [ ] 3. 🧑 Create `.env.local` from `.env.example` with your Firebase web values; `npm run dev` loads the login screen on localhost.
+- [ ] 4. 🧑 Vercel → Project → Settings → Environment Variables: add the four VITE_FIREBASE_* values (Production and Preview). Firebase → Authentication → Settings → Authorized domains: add the vercel.app domain. Set the verification email continue URL to the Vercel URL.
+- [ ] 5. `npx firebase login`, `npx firebase use <project>`, `npx firebase deploy --only firestore:rules`.
+Done when: localhost shows the login screen, Vercel has the four variables, and the Firestore rules are deployed. (The live check happens after the push in T3.)
 
 ## T2 ⬜ README pitch + GIF (~40 min)
 Seam under test: `README.md`, through the existing `documentation.test.js`.
@@ -23,6 +23,6 @@ Done when: `npm run test:run` passes and the GitHub-rendered README shows the GI
 - [ ] 2. Tidy root: move `task-6-report.md` into `docs/`. Drop `dist/` from the tree if it's tracked.
 - [ ] 3. `npm run test:run && npm run build`, both green. Squash the `wip(T*)` commits into clean ones.
 - [ ] 4. `git push -u origin main`.
-- [ ] 5. 🧑 On GitHub: set the repo **Website** to the live URL, add a description and topics (`react`, `firebase`, `vite`, `productivity`). Leave public/private as it is until Day 6 pinning.
-Done when: the GitHub page shows the README with the GIF and the website link opens the live app.
+- [ ] 5. 🧑 On GitHub: set the repo **Website** to the Vercel URL, add a description and topics (`react`, `firebase`, `vite`, `productivity`). Leave public/private as it is until Day 6 pinning.
+Done when: the push triggers a Vercel deploy; on the Vercel URL in a private window: sign up → verify → sign in → add a task → refresh and it's still there; a second account can't see it. GitHub repo Website field points to the Vercel URL.
 
