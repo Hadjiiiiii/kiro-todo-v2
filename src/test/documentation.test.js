@@ -10,4 +10,11 @@ describe('Firebase setup documentation', () => {
     expect(readme).toContain('VITE_FIREBASE_PROJECT_ID');
     expect(readme).toContain('VITE_FIREBASE_APP_ID');
   });
+
+  it('links the live demo and embeds the demo GIF', () => {
+    const readme = readFileSync('README.md', 'utf8');
+
+    expect(readme).toContain('https://hadjiiiiii-taskeep.vercel.app');
+    expect(readme).toMatch(/!\[TasKeep demo\]\(docs\/demo\.gif\)/);
+  });
 });

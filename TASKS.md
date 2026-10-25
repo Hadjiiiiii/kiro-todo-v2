@@ -12,10 +12,10 @@ Done when: localhost shows the login screen, Vercel has the four variables, and 
 
 ## T2 ⬜ README pitch + GIF (~40 min)
 Seam under test: `README.md`, through the existing `documentation.test.js`.
-- [ ] 1. **Red:** extend `documentation.test.js` to expect the live URL and a `docs/demo.gif` image link. Confirm it fails.
+- [x] 1. **Red:** extend `documentation.test.js` to expect the live URL and a `docs/demo.gif` image link. Confirm it fails.
 - [ ] 2. Record a 15–25 s GIF on the live site with a **demo account and fake data**: sign in → Kanban drag → switch to calendar → habit tick → finance entry. Save as `docs/demo.gif` (keep it under ~5 MB).
-- [ ] 3. Add to the top of README, above Local setup: one-line pitch, **Live demo** link, the GIF, a 5-bullet feature list (tasks with Kanban/list/calendar, habits, journal, finance, stats), Stack line, and a "What's interesting here" line (e.g. per-user Firestore rules tested against the emulator, one-time legacy localStorage import).
-- [ ] 4. Test goes green. Update the stale lines in `steering/tech.md` and `steering/structure.md` (Firebase, not localStorage). Commit.
+- [x] 3. Add to the top of README, above Local setup: one-line pitch, **Live demo** link, the GIF, a 5-bullet feature list (tasks with Kanban/list/calendar, habits, journal, finance, stats), Stack line, and a "What's interesting here" line (e.g. per-user Firestore rules tested against the emulator, one-time legacy localStorage import).
+- [x] 4. Test goes green. Update the stale lines in `steering/tech.md` and `steering/structure.md` (Firebase, not localStorage). Commit.
 Done when: `npm run test:run` passes and the GitHub-rendered README shows the GIF above the fold.
 
 ## T3 ⬜ Push to GitHub (~20 min)

@@ -2,6 +2,24 @@
 
 TasKeep is a personal planning app with verified Firebase accounts and private, user-scoped cloud records.
 
+TasKeep keeps your tasks, habits, journal and spending in one place, synced to a private cloud account.
+
+**Live demo:** https://hadjiiiiii-taskeep.vercel.app
+
+![TasKeep demo](docs/demo.gif)
+
+## Features
+
+- Tasks with Kanban, list and calendar views, plus a stats dashboard
+- Habit tracking with daily, weekday and custom schedules
+- A daily journal with a monthly view
+- A simple finance log for income and spending
+- A verified email account; each user can only read and write their own records
+
+**Stack:** React 19, Vite, MUI, Firebase Auth + Cloud Firestore, Vercel, Vitest.
+
+**What's interesting here:** per-user Firestore security rules, tested against the Firestore emulator; a one-time import of data from the older browser-only version; and a test-first startup guard and auth error messages, so a broken config shows a readable message instead of a blank page.
+
 ## Local setup
 
 Requirements:
@@ -77,3 +95,8 @@ npx firebase deploy --only firestore:rules
 ```
 
 Manual emulator acceptance still requires a real Firebase project and the corresponding local configuration. Before release, use emulator users to verify email confirmation, account sign-in persistence, per-user data isolation, password reset, account settings, and the optional one-time legacy import. Do not represent that acceptance as completed until it has been run against your own configured project.
+
+## Troubleshooting
+
+- **Blank page or "Firebase configuration is missing" locally:** `.env.local` is missing or incomplete. Copy `.env.example` to `.env.local`, fill in the four `VITE_FIREBASE_*` values and restart `npm run dev`.
+- **"TasKeep is misconfigured (invalid Firebase API key)":** the host's `VITE_FIREBASE_API_KEY` is wrong. In Vercel → Settings → Environment Variables, paste the real key (not the masked `AIza…••••` text), then redeploy.

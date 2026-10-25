@@ -42,7 +42,12 @@ kiro-todo-v2/
 │   │   ├── TaskCard.jsx            # Individual task card
 │   │   └── CategoryZoomDialog.jsx  # Category detail dialog
 │   └── services/
-│       └── storageService.js   # localStorage abstraction layer
+│       ├── firebase.js          # Firebase app/auth/db setup and config check
+│       ├── authService.js       # Sign-up, sign-in, reset, verification
+│       ├── authErrors.js        # Firebase error codes → user-facing messages
+│       ├── cloudDataService.js  # Firestore reads/writes under users/{uid}
+│       ├── legacyDataService.js # One-time import of old localStorage data
+│       └── storageService.js    # Old localStorage wrapper, no longer imported
 └── steering/               # Project documentation
     ├── tech.md
     ├── structure.md
@@ -55,7 +60,7 @@ kiro-todo-v2/
 
 - **React Context API** — Multiple domain-specific contexts (Task, Habit, Journal, Finance, Auth)
 - Contexts wrap the entire app tree in `main.jsx`
-- Each context manages its own localStorage persistence via `storageService`
+- Each context subscribes to its own Firestore collections via `cloudDataService`
 
 ### Routing
 
@@ -70,7 +75,7 @@ kiro-todo-v2/
 
 ### Data Flow
 
-1. `storageService` reads/writes to localStorage
+1. `cloudDataService` reads/writes the signed-in user's Firestore documents
 2. Context providers load initial state from storage and sync changes
 3. Components consume context via custom hooks (e.g., `useTaskContext`)
 4. User actions dispatch through context functions, which update state and persist

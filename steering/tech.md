@@ -35,8 +35,10 @@
 
 ## Data Storage
 
-- **localStorage** — All data persisted client-side via a custom `storageService`
-- No backend or external database
+- **Cloud Firestore** — Records live under `users/{uid}/…`, readable and writable only by that verified user (`firestore.rules`)
+- **Firebase Auth** — Email/password accounts with email verification
+- `legacyDataService` offers a one-time import of data from the older localStorage-only version
+- Hosted on **Vercel**; Firebase config comes from `VITE_FIREBASE_*` env vars (`.env.local` locally)
 
 ## Module Format
 
