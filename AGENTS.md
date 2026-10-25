@@ -5,7 +5,7 @@ Use the handoff protocol below when switching tools.
 ## Stack
 - React 19 + Vite 8 (JS/JSX, ES modules), MUI 9
 - Firebase Auth (email/password) + Cloud Firestore with user-scoped rules
-- Firebase Hosting (planned)
+- Vercel hosting; Firebase for auth + Firestore
 - Vitest + Testing Library
 
 ## Commands
