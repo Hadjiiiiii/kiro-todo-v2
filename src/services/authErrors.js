@@ -20,6 +20,15 @@ export function mapAuthError(error) {
     case 'auth/network-request-failed': return 'We could not reach the account service. Check your connection and try again.';
     case 'auth/too-many-requests': return 'Too many attempts. Please wait a moment and try again.';
     case 'auth/requires-recent-login': return 'For your security, sign in again and retry this action.';
-    default: return GENERIC_AUTH_ERROR;
+    case 'auth/invalid-credential':
+    case 'auth/wrong-password':
+    case 'auth/user-not-found': return 'Email or password is incorrect.';
+    case 'auth/email-already-in-use': return "Couldn't create the account. If you already have one, sign in or reset your password.";
+    case 'auth/weak-password':
+    case 'auth/password-does-not-meet-requirements': return PASSWORD_REQUIREMENTS;
+    default:
+      // Keep the raw code visible in DevTools so unmapped failures can be diagnosed.
+      console.error('Unhandled auth error:', error?.code);
+      return GENERIC_AUTH_ERROR;
   }
 }
