@@ -24,6 +24,9 @@ export function mapAuthError(error) {
     case 'auth/wrong-password':
     case 'auth/user-not-found': return 'Email or password is incorrect.';
     case 'auth/email-already-in-use': return "Couldn't create the account. If you already have one, sign in or reset your password.";
+    case 'auth/invalid-api-key':
+    case 'auth/api-key-not-valid.-please-pass-a-valid-api-key.':
+      return 'TasKeep is misconfigured (invalid Firebase API key). Please contact the site owner.';
     case 'auth/weak-password':
     case 'auth/password-does-not-meet-requirements': return PASSWORD_REQUIREMENTS;
     default:

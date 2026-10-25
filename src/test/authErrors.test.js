@@ -15,4 +15,9 @@ describe('mapAuthError', () => {
     'repeats the password rules for %s',
     (code) => expect(mapAuthError({ code })).toBe(PASSWORD_REQUIREMENTS),
   );
+
+  it.each(['auth/invalid-api-key', 'auth/api-key-not-valid.-please-pass-a-valid-api-key.'])(
+    'flags a misconfigured deployment for %s',
+    (code) => expect(mapAuthError({ code })).toMatch(/misconfigured/),
+  );
 });
