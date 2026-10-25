@@ -10,20 +10,20 @@ Seam under test: app startup with missing Firebase config (src/services/firebase
 - [x] 5. `npx firebase login`, `npx firebase use <project>`, `npx firebase deploy --only firestore:rules`.
 Done when: localhost shows the login screen, Vercel has the four variables, and the Firestore rules are deployed. (The live check happens after the push in T3.)
 
-## T2 ⬜ README pitch + GIF (~40 min)
+## T2 ✅ README pitch + GIF (~40 min)
 Seam under test: `README.md`, through the existing `documentation.test.js`.
 - [x] 1. **Red:** extend `documentation.test.js` to expect the live URL and a `docs/demo.gif` image link. Confirm it fails.
-- [ ] 2. Record a 15–25 s GIF on the live site with a **demo account and fake data**: sign in → Kanban drag → switch to calendar → habit tick → finance entry. Save as `docs/demo.gif` (keep it under ~5 MB).
+- [x] 2. Record a 15–25 s GIF on the live site with a **demo account and fake data**: sign in → Kanban drag → switch to calendar → habit tick → finance entry. Save as `docs/demo.gif` (keep it under ~5 MB).
 - [x] 3. Add to the top of README, above Local setup: one-line pitch, **Live demo** link, the GIF, a 5-bullet feature list (tasks with Kanban/list/calendar, habits, journal, finance, stats), Stack line, and a "What's interesting here" line (e.g. per-user Firestore rules tested against the emulator, one-time legacy localStorage import).
 - [x] 4. Test goes green. Update the stale lines in `steering/tech.md` and `steering/structure.md` (Firebase, not localStorage). Commit.
 Done when: `npm run test:run` passes and the GitHub-rendered README shows the GIF above the fold.
 
-## T3 ⬜ Push to GitHub (~20 min)
+## T3 ✅ Push to GitHub (~20 min)
 - [x] 1. Secret check: `git status` and `git ls-files | grep -Ei 'env|log'` show only `.env.example`. (`.env.local` and `firestore-debug.log` are already covered by `*.local` and `*.log` in `.gitignore`.)
 - [x] 2. Tidy root: move `task-6-report.md` into `docs/`. Drop `dist/` from the tree if it's tracked.
 - [x] 3. `npm run test:run && npm run build`, both green. Squash the `wip(T*)` commits into clean ones.
 - [x] 4. `git push -u origin main`.
-- [ ] 5. 🧑 On GitHub: set the repo **Website** to the Vercel URL, add a description and topics (`react`, `firebase`, `vite`, `productivity`). Leave public/private as it is until Day 6 pinning.
+- [x] 5. 🧑 On GitHub: set the repo **Website** to the Vercel URL, add a description and topics (`react`, `firebase`, `vite`, `productivity`). Leave public/private as it is until Day 6 pinning.
 Done when: the push triggers a Vercel deploy; on the Vercel URL in a private window: sign up → verify → sign in → add a task → refresh and it's still there; a second account can't see it. GitHub repo Website field points to the Vercel URL.
 
 Open notes (from T1):
