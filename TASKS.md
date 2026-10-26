@@ -30,3 +30,21 @@ Open notes (from T1):
 - Test user `sudais.h.amerol+taskeeptest@gmail.com` was created on localhost while debugging; delete it in Firebase → Authentication → Users.
 - Sign-up from the owner's own browser failed with `auth/network-request-failed` (works from a clean browser). Suspects: ProtonVPN NetShield, Edge tracking prevention. Resolve before the live check.
 - Firestore database location is `nam5` (US), fixed.
+
+## T5 🔒 CI + badge (~30 min) · `tdd` then `code-review` (done locally; waiting on push + green run)
+- [x] 1. **Red:** extend `src/test/documentation.test.js` to expect the CI badge URL. Confirm it fails.
+- [x] 2. Add `.github/workflows/ci.yml`: push/PR to `main`, Node 22, `npm ci`, `npm run test:run`, `npm run build`. Optional `test:rules` job with Java 21. No secrets.
+- [x] 3. Add the badge to the top of README. Green locally, `code-review`, commit. Push after the user says so.
+Done when: the Actions run is green and the badge shows "passing".
+
+## T6 🔒 TasKeep tidy-up (~20 min) (steps 2–4 done by Claude Code; step 1 is the user's)
+- [ ] 1. 🧑 Firebase → Authentication → Users: delete the `+taskeeptest` user.
+- [x] 2. `auth/network-request-failed` in the owner's browser: `diagnosing-bugs`. Write the cause in the open notes.
+- [x] 3. Move `_templates/DAY5.md` to `Kiro/_templates/DAY5.md` and remove the stray untracked `_templates/` folder.
+- [x] 4. Stretch: code-split the >500 kB chunk (`React.lazy` per view). Skipped: views are already `React.lazy`. The 564 kB (164 kB gzip) chunk is the Firebase SDK (app + auth + Firestore), loaded on the login screen. Shrinking it means loading Firestore only after sign-in, which touches every context; park it as its own ticket.
+Done when: `git status` is clean.
+
+Open notes (from T6, 2026-10-26):
+- `auth/network-request-failed` is not a config or code bug. Checked from this Mac: the live bundle's API key is valid (Identity Toolkit answers `INVALID_ID_TOKEN` to a dummy token, not `API_KEY_INVALID`), CORS allows the vercel.app origin, and DNS resolves `identitytoolkit.googleapis.com`. A throwaway Chrome and Edge profile on the live site both reach Identity Toolkit. Blocking that one host (`--host-resolver-rules=MAP identitytoolkit.googleapis.com 0.0.0.0`) gives `TypeError: Failed to fetch`, which the Firebase SDK reports as exactly `auth/network-request-failed`.
+- Cause: something in the owner's own browser path blocks `identitytoolkit.googleapis.com`. ProtonVPN was not running during the check, so the prime suspect is NetShield's DNS blocklist (it only applies while the VPN is on), then Edge tracking prevention on Strict, then an extension. To confirm: reproduce with the VPN on, then turn NetShield off and retry; if it still fails, set Edge tracking prevention to Balanced for the site. Fix on the user side: allowlist `identitytoolkit.googleapis.com` and `securetoken.googleapis.com` (and `firestore.googleapis.com`).
+- No code change, so no regression test: the failing seam is the network outside the app.

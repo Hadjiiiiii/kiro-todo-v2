@@ -1,5 +1,7 @@
 # TasKeep
 
+[![CI](https://github.com/Hadjiiiiii/kiro-todo-v2/actions/workflows/ci.yml/badge.svg)](https://github.com/Hadjiiiiii/kiro-todo-v2/actions/workflows/ci.yml)
+
 TasKeep is a personal planning app with verified Firebase accounts and private, user-scoped cloud records.
 
 TasKeep keeps your tasks, habits, journal and spending in one place, synced to a private cloud account.
