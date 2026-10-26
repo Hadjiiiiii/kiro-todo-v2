@@ -17,4 +17,12 @@ describe('Firebase setup documentation', () => {
     expect(readme).toContain('https://hadjiiiiii-taskeep.vercel.app');
     expect(readme).toMatch(/!\[TasKeep demo\]\(docs\/demo\.gif\)/);
   });
+
+  it('shows the CI status badge', () => {
+    const readme = readFileSync('README.md', 'utf8');
+
+    expect(readme).toContain(
+      '[![CI](https://github.com/Hadjiiiiii/kiro-todo-v2/actions/workflows/ci.yml/badge.svg)](https://github.com/Hadjiiiiii/kiro-todo-v2/actions/workflows/ci.yml)',
+    );
+  });
 });
